@@ -14,3 +14,4 @@
 ## Transcribe to other lang with whisper
 - https://github.com/Vaibhavs10/translate-with-whisper
 - https://ngwaifoong92.medium.com/speech-translation-with-openai-whisper-66156a48122b
+- https://github.com/matecat/MateCat
