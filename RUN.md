@@ -15,7 +15,7 @@
 - yt-dlp -x --audio-format mp3 https://www.youtube.com/watch?v=rlf2OGUTvJg -o test
 
 - PROGRESS_NO_TRUNC=1 docker build --progress plain -t vdub-applio -f vdub-applio/Dockerfile .
-- docker run -dit --name vdub-applio vdub-applio
+- docker run -dit --network host --name vdub-applio vdub-applio
 - docker exec -it vdub-applio bash
 - docker rm -f vdub-applio
 - ./run-applio.sh
@@ -24,5 +24,5 @@
 - docker exec -it vdub-whisper-cpp bash
 - docker rm -f vdub-whisper-cpp
 - youtubedr download -o test.mp4 https://www.youtube.com/watch?v=rlf2OGUTvJg
-- ./main test.wav
 - ffmpeg -i test.mp3 -acodec pcm_u8 -ar 16000 -ac 1 -acodec pcm_s16le test.wav
+- ./main test.wav

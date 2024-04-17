@@ -32,19 +32,27 @@ ENV PATH="$PYENV_ROOT/bin:$PATH"
 
 RUN eval "$(pyenv init -)"
 
+RUN eval "$(pyenv virtualenv-init -)"
+
 RUN echo 'PYENV_ROOT="/root/.pyenv"' >> /root/.bashrc
 RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"'  >> /root/.bashrc
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
+RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 
 RUN echo 'PYENV_ROOT="/root/.pyenv"' >> /root/.profile
 RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"'  >> /root/.profile
 RUN echo 'eval "$(pyenv init -)"' >> /root/.profile
+RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.profile
 
 RUN source /root/.bashrc
+
+# 3.11.8 / 3.10.14
 
 RUN pyenv install 3.10.14
 
 RUN pyenv global 3.10.14
+
+RUN apt-get install -y libasound2-dev libgtk2.0-dev libx11-dev
 
 RUN ln -s /root/.pyenv/shims/python /usr/bin/python
 
@@ -52,24 +60,54 @@ RUN mv /usr/bin/python3 /usr/bin/python3.original
 
 RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
 
-RUN pyenv virtualenv 3.10.14 vdub-applio
+RUN bash -i -c "source ~/.bashrc && pyenv virtualenv 3.10.14 vdub-applio"
 
-RUN pyenv activate vdub-applio
+RUN bash -i -c "source ~/.bashrc && pyenv activate vdub-applio"
 
-RUN python -m ensurepip --upgrade
+RUN bash -i -c "source ~/.bashrc && pip install --upgrade pip"
 
-RUN apt-get install -y pip
+# RUN python -m ensurepip --upgrade
 
-RUN pip install torch torchvision torchaudio praat-parselmouth
+# RUN apt-get install -y pip
+
+# RUN pip install torch torchvision torchaudio praat-parselmouth
+RUN bash -i -c "source ~/.bashrc && pip install torch torchvision"
+
+# RUN bash -i -c "source ~/.bashrc && pip install prophet"
+
+# RUN bash -i -c "source ~/.bashrc && pip install praat-parselmouth"
+
+RUN bash -i -c "source ~/.bashrc && pip install git+https://github.com/YannickJadoul/Parselmouth"
 
 RUN git clone https://github.com/IAHispano/Applio.git
 
 WORKDIR /root/Applio
 
-RUN chmod +x run-install.sh
+# RUN chmod +x run-install.sh
 
-RUN ./run-install.sh
+RUN bash -i -c "source ~/.bashrc && python -m venv .venv"
 
-RUN chmod +x run-applio.sh
+RUN bash -i -c "source ~/.bashrc && . .venv/bin/activate"
 
-RUN ./run-applio.sh
+RUN bash -i -c "source ~/.bashrc && python -m ensurepip"
+
+# TODO: Replace 'praat-parselmouth' in requirements.txt with praat-parselmouth @ git+https://github.com/YannickJadoul/Parselmouth
+RUN sed -i 's/praat-parselmouth/praat-parselmouth @ git\+https:\/\/github.com\/YannickJadoul\/Parselmouth/g' requirements.txt
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
+
+# RUN bash -i -c "source ~/.bashrc && ./run-install.sh"
+
+# RUN chmod +x run-applio.sh
+
+# RUN ./run-applio.sh
+
+ENV PYTORCH_ENABLE_MPS_FALLBACK=1
+
+ENV PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
+
+RUN apt-get install -y vim
+
+# RUN bash -i -c "source ~/.bashrc && python app.py --open --share True"
+
+# WORKDIR /root
