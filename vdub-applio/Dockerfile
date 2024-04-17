@@ -108,6 +108,12 @@ ENV PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
 
 RUN apt-get install -y vim
 
-# RUN bash -i -c "source ~/.bashrc && python app.py --open --share True"
+EXPOSE 6969
+
+ENV GRADIO_SERVER_NAME="0.0.0.0"
+
+# RUN bash -i -c "source ~/.bashrc && python app.py"
 
 # WORKDIR /root
+
+# CMD python app.py --open --share True
