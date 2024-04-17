@@ -14,6 +14,7 @@
 - docker rm -f vdub-whisper
 - yt-dlp -x --audio-format mp3 https://www.youtube.com/watch?v=rlf2OGUTvJg -o test
 
+- PROGRESS_NO_TRUNC=1 docker build --progress plain -t vdub-applio -f vdub-applio/Dockerfile .
 - docker run -dit --name vdub-applio vdub-applio
 - docker exec -it vdub-applio bash
 - docker rm -f vdub-applio
