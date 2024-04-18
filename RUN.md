@@ -19,8 +19,6 @@
 - docker run -d --network host --name vdub-applio vdub-applio
 - docker exec -it vdub-applio bash
 - docker rm -f vdub-applio
-- ./run-applio.sh
-- edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.vtt
 
 - docker run -dit --name vdub-whisper-cpp vdub-whisper-cpp
 - docker exec -it vdub-whisper-cpp bash
@@ -35,3 +33,11 @@
 - docker exec -it applio bash
 - docker rm -f applio
 - ./run-applio.sh
+
+---
+
+edge-tts --text "Hei kamu, senang sekali kamu bergabung dengan kami! Kami ingin memberi tahu Anda tentang sesuatu yang mengubah kurzgesagt selamanya. Kurzgesagt dimulai sebagai proyek gairah skala kecil." --write-media edge-tts-voice-1.mp3 -v id-ID-ArdiNeural --rate=-10% --pitch=-10Hz
+python inference.py --input path/to/an/audio/file
+yt-dlp -S ext mp4 https://www.youtube.com/watch?v=yDMZJ7LgrGY -o testvideo
+
+Hei kamu, senang sekali kamu bergabung dengan kami! Kami ingin memberi tahu Anda tentangnya

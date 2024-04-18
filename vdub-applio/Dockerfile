@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y \
   libgtk2.0-dev \
   libx11-dev \
   vim \
-  sox
+  sox \
+  yt-dlp
 
 WORKDIR /root
 
@@ -62,7 +63,17 @@ RUN sed -i 's/praat-parselmouth/praat-parselmouth @ git\+https:\/\/github.com\/Y
 
 RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
 
-RUN bash -i -c "source ~/.bashrc && python -m pip install edge-tts"
+RUN bash -i -c "source ~/.bashrc && python -m pip install edge-tts yt-dlp"
+
+# VOCAL REMOVER
+
+WORKDIR /root
+
+RUN git clone https://github.com/tsurumeso/vocal-remover.git
+
+WORKDIR /root/vocal-remover
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
 
 # RUN
 
@@ -76,6 +87,6 @@ ENV GRADIO_SERVER_NAME="0.0.0.0"
 
 EXPOSE 6969
 
-ENTRYPOINT [ "python3" ]
+# ENTRYPOINT [ "python3" ]
 
-CMD ["app.py"]
+# CMD ["app.py"]
