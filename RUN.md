@@ -36,8 +36,18 @@
 
 ---
 
-edge-tts --text "Hei kamu, senang sekali kamu bergabung dengan kami! Kami ingin memberi tahu Anda tentang sesuatu yang mengubah kurzgesagt selamanya. Kurzgesagt dimulai sebagai proyek gairah skala kecil." --write-media edge-tts-voice-1.mp3 -v id-ID-ArdiNeural --rate=-10% --pitch=-10Hz
+edge-tts --text "Hei kamu, senang sekali kamu bergabung dengan kami! Kami ingin memberi tahu Anda tentang sesuatu yang mengubah kurzgesagt selamanya. Kurzgesagt dimulai sebagai proyek gairah skala kecil." --write-media edge-tts-voice-1.wav -v id-ID-ArdiNeural --rate=-10% --pitch=-10Hz
+
 python inference.py --input path/to/an/audio/file
+
 yt-dlp -S ext mp4 https://www.youtube.com/watch?v=yDMZJ7LgrGY -o testvideo
 
-Hei kamu, senang sekali kamu bergabung dengan kami! Kami ingin memberi tahu Anda tentangnya
+ffmpeg -i testvideo.mp4 -i test_Instruments.wav -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 testvideo2.mp4
+
+ffmpeg -y -i testvideo2.mp4 -i edge-tts-voice-1.wav -filter_complex "[0:a]aformat=channel_layouts=mono[0a];[1:a]adelay=7000|7000,aformat=channel_layouts=mono[tmp];[0a][tmp]amerge=inputs=2,aformat=channel_layouts=stereo[audio_out]" -map 0:v -map [audio_out] testvideo3.mp4
+
+ffmpeg -i video.mp4 -i edge-tts-voice-1.wav -i edge-tts-voice-1.wav \
+-filter_complex "[0:a]atrim=end=3,asetpts=PTS-STARTPTS[audio0]; \
+[1:a]atrim=start=10,asetpts=PTS-STARTPTS[audio1]; \
+[audio0][audio1]concat=n=2:v=0:a=1[out]" \
+-map 0:v -map "[out]" -c:v copy -c:a aac testvideo3.mp4
