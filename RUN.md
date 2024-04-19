@@ -48,7 +48,21 @@ ffmpeg -i testvideo.mp4 -i test_Instruments.wav -c:v copy -c:a aac -map 0:v:0 -m
 ffmpeg -y -i testvideo2.mp4 -i edge-tts-voice-1.wav -filter_complex "[0:a]aformat=channel_layouts=mono[0a];[1:a]adelay=7000|7000,aformat=channel_layouts=mono[tmp];[0a][tmp]amerge=inputs=2,aformat=channel_layouts=stereo[audio_out]" -map 0:v -map [audio_out] testvideo3.mp4
 
 ffmpeg -i video.mp4 -i edge-tts-voice-1.wav -i edge-tts-voice-1.wav \
--filter_complex "[0:a]atrim=end=3,asetpts=PTS-STARTPTS[audio0]; \
+-filter_complex "
+[0:a]atrim=end=3,asetpts=PTS-STARTPTS[audio0]; \
 [1:a]atrim=start=10,asetpts=PTS-STARTPTS[audio1]; \
 [audio0][audio1]concat=n=2:v=0:a=1[out]" \
 -map 0:v -map "[out]" -c:v copy -c:a aac testvideo3.mp4
+
+---
+
+- docker build -t vdub-core -f vdub-core/Dockerfile .
+- docker run -dit -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared --name vdub-core vdub-core
+- docker exec -it vdub-core bash
+- docker rm -f vdub-core
+- youtubedr download -o test.mp4 https://www.youtube.com/watch?v=rlf2OGUTvJg
+- youtubedr download -o test.mp4 https://www.youtube.com/watch?v=yDMZJ7LgrGY
+- ffmpeg -i test.mp3 -acodec pcm_u8 -ar 16000 -ac 1 -acodec pcm_s16le test.wav
+- ffmpeg -i test.mp4 -vn -acodec pcm_s16le -ar 44100 -ac 2 test.wav
+- ffmpeg -i test_Vocals.wav -acodec pcm_s16le -ac 1 -ar 16000 test_Vocals_16khz.wav
+- ./main test_Vocals_16khz.wav

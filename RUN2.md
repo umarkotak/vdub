@@ -24,6 +24,8 @@ ffmpeg -i video.mp4 -i audio1.wav -i audio2.wav -i audio3.wav \
 [audio0][audio1][audio2]concat=n=3:v=0:a=1[out]" \
 -map 0:v -map "[out]" -c:v copy -c:a aac output.mp4
 
+[0:a]atrim=start=00:00:00.000,end=00:00:03.080,asetpts=PTS-STARTPTS[audio0];
+
 speed mode
 ffmpeg -i video.mp4 -i audio1.wav -i audio2.wav -i audio3.wav \
 -filter_complex "[0:a]atempo=0.33333[audio0]; \
