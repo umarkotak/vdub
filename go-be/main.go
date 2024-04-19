@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -191,10 +193,11 @@ func main() {
 	// transcriptPath := fmt.Sprintf("%s/%s", taskDir, "transcript.vtt")
 	transcriptTranslatedPath := fmt.Sprintf("%s/%s", taskDir, "transcript_translated.vtt")
 	if state.Status == "audio_transcripted" {
+		logrus.Info("TODO: manual transcript on GenAI")
 		// TODO: Implement logic
 
-		state.Status = "transcript_translated"
-		saveState(state)
+		// state.Status = "transcript_translated"
+		// saveState(state)
 	}
 
 	// 9. Generate audio for the transcript
@@ -235,8 +238,6 @@ func main() {
 	instrumentPath := fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 	instrumentVideoPath := fmt.Sprintf("%s/%s", taskDir, "instrument_video.mp4")
 	if state.Status == "audio_generated" {
-		// ffmpeg -i testvideo.mp4 -i test_Instruments.wav -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 testvideo2.mp4
-		// fmt.Printf("INSTRUMENT PATH: %s\n", instrumentPath)
 		cmd = exec.Command("ffmpeg", "-i", rawVideoPath, "-i", instrumentPath, "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0", instrumentVideoPath)
 		cmd.Stderr = &stderr
 		_, err = cmd.Output()
@@ -253,15 +254,54 @@ func main() {
 
 	// 11. Merge instrument video with generated audio
 	dubbedVideoPath := fmt.Sprintf("%s/%s", taskDir, "dubbed_video.mp4")
+	adjustedSpeechDir := fmt.Sprintf("%s/adjusted_speech", taskDir)
 	if state.Status == "video_with_instrument_generated" {
+		cmd = exec.Command("mkdir", "-p", adjustedSpeechDir)
+		_, err = cmd.Output()
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+
 		ffmpegArgs := []string{
 			"-i", instrumentVideoPath,
 		}
 
 		subObj, _ := astisub.OpenFile(transcriptTranslatedPath)
-		for idx := range subObj.Items {
+		for idx, subItem := range subObj.Items {
 			genSpeechPath := fmt.Sprintf("%s/%v.wav", generatedSpeechDir, idx)
-			ffmpegArgs = append(ffmpegArgs, "-i", genSpeechPath)
+			adjustedSpeechPath := fmt.Sprintf("%s/%v.wav", adjustedSpeechDir, idx)
+
+			originalDuration := subItem.EndAt - subItem.StartAt
+			translatedDuration, _ := getWavDuration(genSpeechPath)
+			aTempo := toFixed(translatedDuration.Seconds()/originalDuration.Seconds(), 6)
+			// logrus.Infof(
+			// 	"Diff Duration %v: %v - %v = %v",
+			// 	idx, originalDuration.String(), translatedDuration.String(), aTempo,
+			// )
+			if aTempo < 0.5 {
+				aTempo = 0.5
+			} else if aTempo > 100 {
+				aTempo = 100
+			}
+
+			// ffmpeg -i input.wav -codec:a libmp3lame -filter:a "atempo=0.9992323" -b:a 320K output.mp3
+			cmd = exec.Command(
+				"ffmpeg", "-i", genSpeechPath, "-codec:a", "libmp3lame", "-filter:a", fmt.Sprintf("atempo=%v", aTempo), "-b:a", "320k", adjustedSpeechPath,
+			)
+			cmd.Stderr = &stderr
+			_, err = cmd.Output()
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"ffmpegArgs": ffmpegArgs,
+				}).Errorf("%v - %v", err.Error(), stderr.String())
+				return
+			}
+		}
+
+		for idx := range subObj.Items {
+			adjustedSpeechPath := fmt.Sprintf("%s/%v.wav", adjustedSpeechDir, idx)
+			ffmpegArgs = append(ffmpegArgs, "-i", adjustedSpeechPath)
 		}
 
 		filterComplexes := []string{}
@@ -269,22 +309,11 @@ func main() {
 		for idx, subItem := range subObj.Items {
 			audioIdx := fmt.Sprintf("[audio%v]", idx)
 
-			// [1:a]atrim=start=3.040,end=6.920,asetpts=PTS-STARTPTS[audio1]
-			// filter := fmt.Sprintf(
-			// 	"[%v:a]atrim=start=%v,end=%v,asetpts=PTS-STARTPTS%s",
-			// 	idx,
-			// 	formatDuration(subItem.StartAt),
-			// 	formatDuration(subItem.EndAt),
-			// 	audioIdx,
-			// )
-			// filterComplexes = append(filterComplexes, filter)
+			logrus.Infof("DEBUG DELAY %v: %v - %v", idx, subItem.StartAt.Milliseconds(), subItem.EndAt.Milliseconds())
 
-			// 	ffmpeg -i in.avi -i audio.wav -filter_complex
-			// "[0:a]adelay=62000|62000[aud];[0][aud]amix" -c:v copy out.avi
 			filter := fmt.Sprintf(
-				"[%v:a]adelay=%v|%v%s",
-				idx,
-				subItem.StartAt.Milliseconds(),
+				"[%v]adelay=%v%s",
+				idx+1,
 				subItem.StartAt.Milliseconds(),
 				audioIdx,
 			)
@@ -292,19 +321,14 @@ func main() {
 
 			filterComplexCloser += audioIdx
 		}
-		// filterComplexCloser += fmt.Sprintf("concat=n=%v:v=0:a=1[out]", len(subObj.Items))
 		filterComplexCloserFormatted := fmt.Sprintf("[0]%samix=%v", filterComplexCloser, len(subObj.Items)+1)
-		// filterComplexes = append(filterComplexes, filterComplexCloser)
 		filterComplexes = append(filterComplexes, filterComplexCloserFormatted)
 
-		ffmpegArgs = append(ffmpegArgs, "-filter_complex", fmt.Sprintf("\"%s\"", strings.Join(filterComplexes, ";")))
+		ffmpegArgs = append(ffmpegArgs, "-filter_complex", fmt.Sprintf("%s", strings.Join(filterComplexes, ";")))
 
 		ffmpegArgs = append(
 			ffmpegArgs,
-			// "-map", "0:v",
-			// "-map", "\"[out]\"",
 			"-c:v", "copy",
-			// "-c:a", "aac",
 			dubbedVideoPath,
 		)
 
@@ -343,49 +367,33 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
 }
 
-// [00:00:00.000 --> 00:00:03.040] Hai kamu, senang sekali kamu bisa bergabung dengan kami.
-// [00:00:03.040 --> 00:00:06.920] Kami ingin menceritakan sesuatu yang mengubah seni Kotska selamanya.
-// [00:00:06.920 --> 00:00:11.600] Seni Kotska dimulai sebagai proyek hobi berskala kecil, tetapi membuat video sains animasi
-// [00:00:11.600 --> 00:00:14.920] yang gratis untuk semua orang tidaklah menghasilkan uang.
-// [00:00:14.920 --> 00:00:16.600] Sialan, kenyataan.
-// transcripts := []Transcript{
-// 	{
-// 		Start:   "",
-// 		Stop:    "",
-// 		Text:    "",
-// 		AudFile: "",
-// 	},
-// }
+func getWavDuration(filename string) (time.Duration, error) {
+	// ffprobe -i /root/shared/test1/generated_speech/32.wav -show_entries format=duration -v quiet -of csv="p=0"
 
-// ffmpegCmd := `ffmpeg`
-// ffmpegCmd += ` -i testvideo2.mp4`
-// ffmpegCmd += ` ` + strings.Join(
-// 	[]string{
-// 		"edge-tts-voice-1.wav",
-// 		"edge-tts-voice-2.wav",
-// 		"edge-tts-voice-3.wav",
-// 		"edge-tts-voice-4.wav",
-// 		"edge-tts-voice-5.wav",
-// 		"edge-tts-voice-6.wav",
-// 	}, " ",
-// )
-// ffmpegCmd += ` -filter_complex`
-// ffmpegCmd += ` "`
-// ffmpegCmd += strings.Join([]string{
-// 	"[0:a]atrim=end=3.040,asetpts=PTS-STARTPTS[audio0]",
-// 	"[1:a]atrim=start=3.040,end=6.920,asetpts=PTS-STARTPTS[audio1]",
-// 	"[2:a]atrim=start=6.920,end=11.600,asetpts=PTS-STARTPTS[audio2]",
-// 	"[audio0][audio1][audio2]concat=n=3:v=0:a=1[out]",
-// }, ";")
-// ffmpegCmd += `"`
+	cmd := exec.Command("ffprobe", "-i", filename, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		logrus.Errorf("%v - %v", err.Error(), stderr.String())
+	}
 
-// ffmpegCmd += ` -map 0:v -map "[out]" -c:v copy -c:a aac output.mp4`
+	seconds, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
+	if err != nil {
+		logrus.Error(err)
+	}
 
-// fmt.Println(ffmpegCmd)
+	// Convert seconds to time.Duration (in nanoseconds)
+	duration := time.Duration(seconds * float64(time.Second))
 
-// ffmpeg -i video.mp4 -i audio1.wav -i audio2.wav -i audio3.wav \
-// -filter_complex "[0:a]atrim=end=3.040,asetpts=PTS-STARTPTS[audio0]; \
-// [1:a]atrim=start=3.040,end=6.920,asetpts=PTS-STARTPTS[audio1]; \
-// [2:a]atrim=start=6.920,end=11.600,asetpts=PTS-STARTPTS[audio2]; \
-// [audio0][audio1][audio2]concat=n=3:v=0:a=1[out]" \
-// -map 0:v -map "[out]" -c:v copy -c:a aac output.mp4
+	return duration, nil
+}
+
+func round(num float64) int {
+	return int(num + math.Copysign(0.5, num))
+}
+
+func toFixed(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return float64(round(num*output)) / output
+}
