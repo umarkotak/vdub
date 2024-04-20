@@ -234,7 +234,7 @@ func main() {
 	// 9.2 TODO: Do a voice synthesize
 
 	// 10. Merge video with instrument only audio
-	logrus.Info("9. MERGE VIDEO WITH INSTRUMENT ONLY")
+	logrus.Info("10. MERGE VIDEO WITH INSTRUMENT ONLY")
 	instrumentPath := fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 	instrumentVideoPath := fmt.Sprintf("%s/%s", taskDir, "instrument_video.mp4")
 	if state.Status == "audio_generated" {
@@ -252,8 +252,8 @@ func main() {
 		saveState(state)
 	}
 
-	// 11. Merge instrument video with generated audio
-	dubbedVideoPath := fmt.Sprintf("%s/%s", taskDir, "dubbed_video.mp4")
+	// 11. Adjust generated audio duration
+	logrus.Info("11. ADJUST AUDIO DURATION")
 	adjustedSpeechDir := fmt.Sprintf("%s/adjusted_speech", taskDir)
 	if state.Status == "video_with_instrument_generated" {
 		cmd = exec.Command("mkdir", "-p", adjustedSpeechDir)
@@ -261,10 +261,6 @@ func main() {
 		if err != nil {
 			logrus.Error(err)
 			return
-		}
-
-		ffmpegArgs := []string{
-			"-i", instrumentVideoPath,
 		}
 
 		subObj, _ := astisub.OpenFile(transcriptTranslatedPath)
@@ -275,28 +271,35 @@ func main() {
 			originalDuration := subItem.EndAt - subItem.StartAt
 			translatedDuration, _ := getWavDuration(genSpeechPath)
 			aTempo := toFixed(translatedDuration.Seconds()/originalDuration.Seconds(), 6)
-			// logrus.Infof(
-			// 	"Diff Duration %v: %v - %v = %v",
-			// 	idx, originalDuration.String(), translatedDuration.String(), aTempo,
-			// )
 			if aTempo < 0.5 {
 				aTempo = 0.5
 			} else if aTempo > 100 {
 				aTempo = 100
 			}
 
-			// ffmpeg -i input.wav -codec:a libmp3lame -filter:a "atempo=0.9992323" -b:a 320K output.mp3
 			cmd = exec.Command(
 				"ffmpeg", "-i", genSpeechPath, "-codec:a", "libmp3lame", "-filter:a", fmt.Sprintf("atempo=%v", aTempo), "-b:a", "320k", adjustedSpeechPath,
 			)
 			cmd.Stderr = &stderr
 			_, err = cmd.Output()
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"ffmpegArgs": ffmpegArgs,
-				}).Errorf("%v - %v", err.Error(), stderr.String())
+				logrus.Errorf("%v - %v", err.Error(), stderr.String())
 				return
 			}
+		}
+
+		state.Status = "audio_adjusted"
+		saveState(state)
+	}
+
+	// 12. Merge instrument video with generated audio
+	logrus.Info("12. MERGE VIDEO WITH GENERATED AUDIO")
+	dubbedVideoPath := fmt.Sprintf("%s/%s", taskDir, "dubbed_video.mp4")
+	if state.Status == "audio_adjusted" {
+		subObj, _ := astisub.OpenFile(transcriptTranslatedPath)
+
+		ffmpegArgs := []string{
+			"-i", instrumentVideoPath,
 		}
 
 		for idx := range subObj.Items {
@@ -304,7 +307,9 @@ func main() {
 			ffmpegArgs = append(ffmpegArgs, "-i", adjustedSpeechPath)
 		}
 
-		filterComplexes := []string{}
+		filterComplexes := []string{
+			"[0]volume=20dB[video0]",
+		}
 		filterComplexCloser := ""
 		for idx, subItem := range subObj.Items {
 			audioIdx := fmt.Sprintf("[audio%v]", idx)
@@ -312,7 +317,7 @@ func main() {
 			logrus.Infof("DEBUG DELAY %v: %v - %v", idx, subItem.StartAt.Milliseconds(), subItem.EndAt.Milliseconds())
 
 			filter := fmt.Sprintf(
-				"[%v]adelay=%v%s",
+				"[%v]volume=20dB,adelay=%v%s",
 				idx+1,
 				subItem.StartAt.Milliseconds(),
 				audioIdx,
@@ -321,7 +326,7 @@ func main() {
 
 			filterComplexCloser += audioIdx
 		}
-		filterComplexCloserFormatted := fmt.Sprintf("[0]%samix=%v", filterComplexCloser, len(subObj.Items)+1)
+		filterComplexCloserFormatted := fmt.Sprintf("[video0]%samix=%v", filterComplexCloser, len(subObj.Items)+1)
 		filterComplexes = append(filterComplexes, filterComplexCloserFormatted)
 
 		ffmpegArgs = append(ffmpegArgs, "-filter_complex", fmt.Sprintf("%s", strings.Join(filterComplexes, ";")))
