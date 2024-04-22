@@ -33,3 +33,5 @@ ffmpeg -i video.mp4 -i audio1.wav -i audio2.wav -i audio3.wav \
 [2:a]atempo=1.5,asetpts=PTS-STARTPTS[audio2]; \
 [audio0][audio1][audio2]concat=n=3:v=0:a=1[out]" \
 -map 0:v -map "[out]" -c:v copy -c:a aac output.mp4
+
+docker update --cpus="2048" vdub-core
