@@ -51,10 +51,7 @@ var (
 	config               = Config{}
 	baseDir              = "/root/shared"
 
-	// whisperModelPath = "/root/shared/models/ggml-base.en.bin"
-	// whisperModelPath = "/root/shared/models/ggml-large-v3.bin"
-	whisperModelPath = "/root/shared/models/ggml-medium.en-q5_0.bin"
-	// whisperModelPath = "/root/shared/models/ggml-model.jp.bin"
+	whisperModelPath = "/root/whisper.cpp/models/ggml-medium.en-q5_0.bin"
 
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=yDMZJ7LgrGY"
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=pQWd9YqvloU"
@@ -162,7 +159,7 @@ func main() {
 
 	//MARK: 5. Separate video vocal and sound
 	vocalRemoverExe := "/root/vocal-remover/inference.py"
-	modelPath := "/root/shared/baseline.pth"
+	modelPath := "/root/vocal-remover/baseline.pth"
 	logrus.Info("5. SEPARATE VIDEO VOCAL AND SOUND")
 	if state.Status == "video_audio_generated" {
 		cmd = exec.Command("python", vocalRemoverExe, "--input", rawVideoAudioPath, "-P", modelPath, "-o", taskDir)

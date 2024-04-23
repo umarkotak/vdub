@@ -57,7 +57,7 @@ ffmpeg -i video.mp4 -i edge-tts-voice-1.wav -i edge-tts-voice-1.wav \
 ---
 
 - docker build -t vdub-core -f vdub-core/Dockerfile .
-- docker run -dit -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared --name vdub-core vdub-core
+- docker run -dit -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared -v /Users/umarramadhana/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
 - docker exec -it vdub-core bash
 - docker rm -f vdub-core
 - youtubedr download -o test.mp4 https://www.youtube.com/watch?v=rlf2OGUTvJg

@@ -77,6 +77,8 @@ WORKDIR /root/vocal-remover
 
 RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
 
+RUN curl -OL https://huggingface.co/fabiogra/baseline_vocal_remover/resolve/main/baseline.pth?download=true
+
 # GOLANG
 
 WORKDIR /root
@@ -106,6 +108,10 @@ RUN bash ./models/download-ggml-model.sh base.en
 RUN make
 
 RUN make medium.en
+
+RUN make quantize
+
+RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
 
 WORKDIR /root
 
