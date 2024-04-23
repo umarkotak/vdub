@@ -57,7 +57,7 @@ var (
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=pQWd9YqvloU"
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=pjoQdz0nxf4"
 	youtubeVideoURL = "https://www.youtube.com/watch?v=_Zc-NE8pmtg"
-	taskName        = "test4-what-if-blackhole"
+	taskName        = "test5-what-if-blackhole"
 
 	taskDir   = fmt.Sprintf("%s/%s", baseDir, taskName)
 	stateName = "state.json"
@@ -448,7 +448,7 @@ func main() {
 		}
 
 		filterComplexes := []string{
-			"[0]volume=30dB[video0]",
+			"[0]volume=40dB[video0]",
 		}
 		filterComplexCloser := ""
 		for idx, subItem := range subObj.Items {
