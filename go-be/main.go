@@ -53,8 +53,8 @@ var (
 
 	whisperModelPath = "/root/whisper.cpp/models/ggml-medium.en-q5_0.bin"
 
-	youtubeVideoURL = "https://www.youtube.com/watch?v=L_JQOH1tEEA"
-	taskName        = "p-1-kurz-1"
+	youtubeVideoURL = "https://www.youtube.com/watch?v=dXdqV1vxhxU"
+	taskName        = "p-1-news-1"
 
 	taskDir   = fmt.Sprintf("%s/%s", baseDir, taskName)
 	stateName = "state.json"

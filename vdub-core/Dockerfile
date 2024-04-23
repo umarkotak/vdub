@@ -83,11 +83,17 @@ RUN curl -OL https://huggingface.co/fabiogra/baseline_vocal_remover/resolve/main
 
 WORKDIR /root
 
-RUN curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz
+# for apple arm chip
+# RUN curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz
+
+# for intel chip
+RUN curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
 
 RUN mkdir -p go/bin
 
-RUN tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz
+# RUN tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz
+
+RUN tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz
 
 ENV GOROOT=/usr/local/go
 
@@ -98,6 +104,8 @@ ENV GOBIN=$GOPATH/bin
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 RUN rm -rf go1.22.2.linux-arm64.tar.gz
+
+RUN rm -rf go1.22.2.linux-amd64.tar.gz
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git
 
