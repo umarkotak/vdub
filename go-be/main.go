@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,10 +15,19 @@ import (
 	"time"
 
 	astisub "github.com/asticode/go-astisub"
+	"github.com/bregydoc/gtranslate"
+	"github.com/google/generative-ai-go/genai"
+	"github.com/joho/godotenv"
+	"github.com/schollz/progressbar/v3"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 )
 
 type (
+	Config struct {
+		GOOGLE_AI_STUDIO_KEY string
+	}
+
 	TaskState struct {
 		Status        string       `json:"status"`         // Enum: initialized
 		Progress      string       `json:"progress"`       //
@@ -37,29 +47,66 @@ type (
 )
 
 var (
-	baseDir = "/root/shared"
+	genaiGiminiProVision = &genai.GenerativeModel{}
+	config               = Config{}
+	baseDir              = "/root/shared"
 
-	taskName = "test1"
-	taskDir  = fmt.Sprintf("%s/%s", baseDir, taskName)
+	// whisperModelPath = "/root/shared/models/ggml-base.en.bin"
+	// whisperModelPath = "/root/shared/models/ggml-large-v3.bin"
+	whisperModelPath = "/root/shared/models/ggml-medium.en-q5_0.bin"
+	// whisperModelPath = "/root/shared/models/ggml-model.jp.bin"
 
+	// youtubeVideoURL = "https://www.youtube.com/watch?v=yDMZJ7LgrGY"
+	// youtubeVideoURL = "https://www.youtube.com/watch?v=pQWd9YqvloU"
+	// youtubeVideoURL = "https://www.youtube.com/watch?v=pjoQdz0nxf4"
+	youtubeVideoURL = "https://www.youtube.com/watch?v=_Zc-NE8pmtg"
+	taskName        = "test4-what-if-blackhole"
+
+	taskDir   = fmt.Sprintf("%s/%s", baseDir, taskName)
 	stateName = "state.json"
 	statePath = fmt.Sprintf("%s/%s", taskDir, stateName)
-
-	youtubeVideoURL = "https://www.youtube.com/watch?v=yDMZJ7LgrGY"
 )
 
-func main() {
+func initialize() {
 	logrus.SetReportCaller(true)
+
+	godotenv.Load()
+
+	config = Config{
+		GOOGLE_AI_STUDIO_KEY: os.Getenv("GOOGLE_AI_STUDIO_KEY"),
+	}
+
+	genaiClient, err := genai.NewClient(
+		context.TODO(),
+		option.WithAPIKey(config.GOOGLE_AI_STUDIO_KEY),
+	)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	// genaiGiminiProVision = genaiClient.GenerativeModel("gemini-pro-vision")
+	genaiGiminiProVision = genaiClient.GenerativeModel("gemini-pro")
+	// genaiGiminiProVision.SafetySettings = []*genai.SafetySetting{
+	// 	{
+	// 		Category:  genai.HarmCategoryUnspecified,
+	// 		Threshold: genai.HarmBlockNone,
+	// 	},
+	// }
+}
+
+func main() {
+	initialize()
 
 	state := TaskState{}
 
-	// 0. Load existing state
+	//MARK: 0. Load existing state
 	stateJson, err := os.ReadFile(statePath)
 	if err == nil {
 		json.Unmarshal(stateJson, &state)
 	}
 
-	// 1. Prepare directory for task
+	//MARK: 1. Prepare directory for task
 	logrus.Info("1. PREPARING DIR")
 	cmd := exec.Command("mkdir", "-p", taskDir)
 	_, err = cmd.Output()
@@ -68,14 +115,14 @@ func main() {
 		return
 	}
 
-	// 2. Initializing state.json for state management
+	//MARK: 2. Initializing state.json for state management
 	logrus.Info("2. INITIALIZING TASK")
 	if state.Status == "" {
 		state.Status = "initialized"
 		saveState(state)
 	}
 
-	// 3. Download youtube video
+	//MARK: 3. Download youtube video
 	var stderr bytes.Buffer
 	rawVideoName := "raw_video.mp4"
 	rawVideoPath := fmt.Sprintf("%s/%s", taskDir, rawVideoName)
@@ -93,7 +140,7 @@ func main() {
 		saveState(state)
 	}
 
-	// 4. Generate video audio in wav format
+	//MARK: 4. Generate video audio in wav format
 	rawVideoAudioName := "raw_video_audio.wav"
 	rawVideoAudioPath := fmt.Sprintf("%s/%s", taskDir, rawVideoAudioName)
 	logrus.Info("4. GENERATING AUDIO")
@@ -113,18 +160,31 @@ func main() {
 		saveState(state)
 	}
 
-	// 5. Separate video vocal and sound
+	//MARK: 5. Separate video vocal and sound
 	vocalRemoverExe := "/root/vocal-remover/inference.py"
 	modelPath := "/root/shared/baseline.pth"
 	logrus.Info("5. SEPARATE VIDEO VOCAL AND SOUND")
 	if state.Status == "video_audio_generated" {
 		cmd = exec.Command("python", vocalRemoverExe, "--input", rawVideoAudioPath, "-P", modelPath, "-o", taskDir)
-		cmd.Stderr = &stderr
-		_, err = cmd.Output()
+
+		// stdout, _ := cmd.StdoutPipe()
+		stderr, _ := cmd.StderrPipe()
+		err = cmd.Start()
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
-				"rawVideoAudioPath": rawVideoAudioPath,
-			}).Errorf("%v - %v", err.Error(), stderr.String())
+				"cmd": cmd.String(),
+			}).Error(err)
+			return
+		}
+
+		streamStd(stderr)
+
+		err = cmd.Wait()
+		fmt.Printf("\n")
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"cmd": cmd.String(),
+			}).Error(err)
 			return
 		}
 
@@ -132,7 +192,7 @@ func main() {
 		saveState(state)
 	}
 
-	// 6. Convert vocal sound to 16KHz
+	//MARK: 6. Convert vocal sound to 16KHz
 	vocalPath := fmt.Sprintf("%s_Vocals.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 	vocal16KHzName := "raw_video_audio_Vocals_16KHz.wav"
 	vocal16KHzPath := fmt.Sprintf("%s/%s", taskDir, vocal16KHzName)
@@ -152,55 +212,126 @@ func main() {
 		saveState(state)
 	}
 
-	// 7. Transcript vocal
+	//MARK: 7. Transcript vocal
 	logrus.Info("7. TRANSCRIPTING VOCAL TO TEXT")
-	whisperModelPath := "/root/shared/models/ggml-base.en.bin"
 	transcriptPath := fmt.Sprintf("%s/%s", taskDir, "transcript")
 	whisperExe := "/root/shared/main"
 	if state.Status == "audio_16khz_generated" {
-		// ./main
-		cmdTranscript := exec.Command(whisperExe, "-m", whisperModelPath, "-oj", "-otxt", "-ovtt", "-of", transcriptPath, vocal16KHzPath)
-		// cmd = exec.Command(whisperExe, "-m", whisperModelPath, vocal16KHzPath)
+		// ./main -m /root/shared/models/ggml-base.en.bin -l en -bs 7 -bo 7 -wt 0.04 -ovtt /root/shared/test3-kurzgesagt/transcript-t /root/shared/test3-kurzgesagt/raw_video_audio_Vocals_16KHz.wav
+		// cmdTranscript := exec.Command(whisperExe, "-m", whisperModelPath, "-oj", "-otxt", "-ovtt", "-of", transcriptPath, vocal16KHzPath)
+		// cmdTranscript := exec.Command(whisperExe, "-m", whisperModelPath, "-ovtt", "-of", transcriptPath, vocal16KHzPath)
+		cmdTranscript := exec.Command(
+			whisperExe,
+			"-m", whisperModelPath,
+			"-ovtt",
+			"--beam-size", "6",
+			"--entropy-thold", "2.8",
+			"--max-context", "128",
+			"-of", transcriptPath,
+			vocal16KHzPath,
+		)
 
 		stdout, _ := cmdTranscript.StdoutPipe()
 		stderr, _ := cmdTranscript.StderrPipe()
-		_ = cmdTranscript.Start()
-
-		scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
-		scanner.Split(bufio.ScanWords)
-		for scanner.Scan() {
-			m := scanner.Text()
-
-			prefix := ""
-			if strings.Contains(m, "[") {
-				prefix = "\n"
-			} else {
-				prefix = " "
-			}
-
-			fmt.Printf("%s%s", prefix, m)
+		err = cmdTranscript.Start()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"cmdTranscript": cmdTranscript.String(),
+			}).Error(err)
 		}
-		_ = cmdTranscript.Wait()
+
+		streamCmdTranscript(stdout, stderr)
+
+		err = cmdTranscript.Wait()
 		fmt.Printf("\n")
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"cmdTranscript": cmdTranscript.String(),
+			}).Error(err)
+		}
 
 		state.Status = "audio_transcripted"
 		saveState(state)
 	}
 
-	// 8. TODO: Translate transcript.vtt -> transcript_translated.vtt
+	//MARK: 8. Translate transcript.vtt -> transcript_translated.vtt
 	// As of now this will be done manually using google genAI and manually write the file
 	logrus.Info("8. TRANSLATE TRANSCRIPT TO TARGET LANGUAGE")
-	// transcriptPath := fmt.Sprintf("%s/%s", taskDir, "transcript.vtt")
+	transcriptVttPath := fmt.Sprintf("%s/%s", taskDir, "transcript.vtt")
 	transcriptTranslatedPath := fmt.Sprintf("%s/%s", taskDir, "transcript_translated.vtt")
 	if state.Status == "audio_transcripted" {
-		logrus.Info("TODO: manual transcript on GenAI")
+		// logrus.Info("TODO: manual transcript on GenAI")
 		// TODO: Implement logic
+		vttContentByte, err := os.ReadFile(transcriptVttPath)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+		vttContent := string(vttContentByte)
 
-		// state.Status = "transcript_translated"
-		// saveState(state)
+		// genAIPrompt := fmt.Sprintf(`
+		// 	Help translate this transcript to Bahasa Indonesia.
+		// 	I want the output in vtt. Give me all the result without break.
+
+		// 	%s
+		// `, string(vttContentByte))
+
+		// resp, err := genaiGiminiProVision.GenerateContent(context.TODO(), genai.Text(genAIPrompt))
+		// if err != nil {
+		// 	logrus.Error(err)
+		// 	return
+		// }
+
+		// if resp.Candidates == nil {
+		// 	logrus.Error("nil genai candidates")
+		// 	return
+		// }
+
+		// vttContent := ""
+		// for _, candidate := range resp.Candidates {
+		// 	vttContent += fmt.Sprintf("%+v", candidate.Content.Parts)
+		// 	if vttContent != "" {
+		// 		break
+		// 	}
+		// }
+		// if vttContent == "" {
+		// 	logrus.Error("empty string genai candidates")
+		// 	return
+		// }
+
+		// vttContent = strings.TrimPrefix(vttContent, "[")
+		// vttContent = strings.TrimSuffix(vttContent, "]")
+
+		subObj, _ := astisub.OpenFile(transcriptVttPath)
+
+		bar := progressbar.Default(int64(len(subObj.Items)), "Translating")
+		for _, subItem := range subObj.Items {
+			translated, err := gtranslate.TranslateWithParams(
+				subItem.String(),
+				gtranslate.TranslationParams{
+					From: "en", To: "id",
+				},
+			)
+			if err != nil {
+				logrus.Error(err)
+				return
+			}
+
+			vttContent = strings.ReplaceAll(vttContent, subItem.String(), translated)
+			bar.Add(1)
+		}
+
+		err = os.WriteFile(transcriptTranslatedPath, []byte(vttContent), 0644)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+
+		state.Status = "transcript_translated"
+		saveState(state)
 	}
 
-	// 9. Generate audio for the transcript
+	//MARK: 9. Generate audio for the transcript
 	logrus.Info("9. GENERATE AUDIO FOR TRANSLATED TRANSCRIPT")
 	generatedSpeechDir := fmt.Sprintf("%s/generated_speech", taskDir)
 	if state.Status == "transcript_translated" {
@@ -212,28 +343,38 @@ func main() {
 		}
 
 		subObj, _ := astisub.OpenFile(transcriptTranslatedPath)
+		bar := progressbar.Default(int64(len(subObj.Items)), "Generating Audio")
 		for idx, subItem := range subObj.Items {
-			fmt.Printf("%v - [%v --> %v] %v\n", idx, subItem.StartAt, subItem.EndAt, subItem.String())
+			// fmt.Printf("%v - [%v --> %v] %v\n", idx, subItem.StartAt, subItem.EndAt, subItem.String())
 
 			genSpeechPath := fmt.Sprintf("%s/%v.wav", generatedSpeechDir, idx)
-			cmd = exec.Command("edge-tts", "--text", subItem.String(), "--write-media", genSpeechPath, "-v", "id-ID-ArdiNeural", "--rate=-10%", "--pitch=-10Hz")
+			cmd = exec.Command(
+				"edge-tts",
+				"--text", fmt.Sprintf("\"%s\"", subItem.String()),
+				"--write-media", genSpeechPath,
+				"-v", "id-ID-ArdiNeural",
+				"--rate=-10%",
+				"--pitch=-10Hz",
+			)
 			cmd.Stderr = &stderr
 			_, err = cmd.Output()
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"genSpeechPath": genSpeechPath,
+					"cmd":           cmd.String(),
 				}).Errorf("%v - %v", err.Error(), stderr.String())
 				return
 			}
+			bar.Add(1)
 		}
 
 		state.Status = "audio_generated"
 		saveState(state)
 	}
 
-	// 9.2 TODO: Do a voice synthesize
+	//MARK: 9.2 TODO: Do a voice synthesize
 
-	// 10. Merge video with instrument only audio
+	//MARK: 10. Merge video with instrument only audio
 	logrus.Info("10. MERGE VIDEO WITH INSTRUMENT ONLY")
 	instrumentPath := fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 	instrumentVideoPath := fmt.Sprintf("%s/%s", taskDir, "instrument_video.mp4")
@@ -252,7 +393,7 @@ func main() {
 		saveState(state)
 	}
 
-	// 11. Adjust generated audio duration
+	//MARK: 11. Adjust generated audio duration
 	logrus.Info("11. ADJUST AUDIO DURATION")
 	adjustedSpeechDir := fmt.Sprintf("%s/adjusted_speech", taskDir)
 	if state.Status == "video_with_instrument_generated" {
@@ -264,6 +405,7 @@ func main() {
 		}
 
 		subObj, _ := astisub.OpenFile(transcriptTranslatedPath)
+		bar := progressbar.Default(int64(len(subObj.Items)), "Adjusting Audio")
 		for idx, subItem := range subObj.Items {
 			genSpeechPath := fmt.Sprintf("%s/%v.wav", generatedSpeechDir, idx)
 			adjustedSpeechPath := fmt.Sprintf("%s/%v.wav", adjustedSpeechDir, idx)
@@ -271,8 +413,8 @@ func main() {
 			originalDuration := subItem.EndAt - subItem.StartAt
 			translatedDuration, _ := getWavDuration(genSpeechPath)
 			aTempo := toFixed(translatedDuration.Seconds()/originalDuration.Seconds(), 6)
-			if aTempo < 0.5 {
-				aTempo = 0.5
+			if aTempo < 1 {
+				aTempo = 1.1
 			} else if aTempo > 100 {
 				aTempo = 100
 			}
@@ -286,13 +428,14 @@ func main() {
 				logrus.Errorf("%v - %v", err.Error(), stderr.String())
 				return
 			}
+			bar.Add(1)
 		}
 
 		state.Status = "audio_adjusted"
 		saveState(state)
 	}
 
-	// 12. Merge instrument video with generated audio
+	//MARK: 12. Merge instrument video with generated audio
 	logrus.Info("12. MERGE VIDEO WITH GENERATED AUDIO")
 	dubbedVideoPath := fmt.Sprintf("%s/%s", taskDir, "dubbed_video.mp4")
 	if state.Status == "audio_adjusted" {
@@ -308,16 +451,16 @@ func main() {
 		}
 
 		filterComplexes := []string{
-			"[0]volume=20dB[video0]",
+			"[0]volume=30dB[video0]",
 		}
 		filterComplexCloser := ""
 		for idx, subItem := range subObj.Items {
 			audioIdx := fmt.Sprintf("[audio%v]", idx)
 
-			logrus.Infof("DEBUG DELAY %v: %v - %v", idx, subItem.StartAt.Milliseconds(), subItem.EndAt.Milliseconds())
+			// logrus.Infof("DEBUG DELAY %v: %v - %v", idx, subItem.StartAt.Milliseconds(), subItem.EndAt.Milliseconds())
 
 			filter := fmt.Sprintf(
-				"[%v]volume=20dB,adelay=%v%s",
+				"[%v]volume=40dB,adelay=%v%s",
 				idx+1,
 				subItem.StartAt.Milliseconds(),
 				audioIdx,
@@ -348,8 +491,8 @@ func main() {
 			return
 		}
 
-		// state.Status = "dubbed_video_generated"
-		// saveState(state)
+		state.Status = "dubbed_video_generated"
+		saveState(state)
 	}
 
 	fmt.Printf("TASK [%s] DONE\n", taskName)
@@ -364,13 +507,13 @@ func saveState(state TaskState) {
 	}
 }
 
-func formatDuration(d time.Duration) string {
-	hours := int(d.Hours())
-	minutes := int(d.Minutes()) % 60
-	seconds := int(d.Seconds()) % 60
-	milliseconds := int(d.Milliseconds()) % 1000
-	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
-}
+// func formatDuration(d time.Duration) string {
+// 	hours := int(d.Hours())
+// 	minutes := int(d.Minutes()) % 60
+// 	seconds := int(d.Seconds()) % 60
+// 	milliseconds := int(d.Milliseconds()) % 1000
+// 	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
+// }
 
 func getWavDuration(filename string) (time.Duration, error) {
 	// ffprobe -i /root/shared/test1/generated_speech/32.wav -show_entries format=duration -v quiet -of csv="p=0"
@@ -401,4 +544,39 @@ func round(num float64) int {
 func toFixed(num float64, precision int) float64 {
 	output := math.Pow(10, float64(precision))
 	return float64(round(num*output)) / output
+}
+
+func streamCmd(stdout, stderr io.ReadCloser) {
+	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		m := scanner.Text()
+		fmt.Println(m)
+	}
+}
+
+func streamStd(std io.ReadCloser) {
+	scanner := bufio.NewScanner(std)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		m := scanner.Text()
+		fmt.Println(m)
+	}
+}
+
+func streamCmdTranscript(stdout, stderr io.ReadCloser) {
+	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		m := scanner.Text()
+
+		prefix := ""
+		if strings.Contains(m, "[") {
+			prefix = "\n"
+		} else {
+			prefix = " "
+		}
+
+		fmt.Printf("%s%s", prefix, m)
+	}
 }

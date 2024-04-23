@@ -105,6 +105,8 @@ RUN bash ./models/download-ggml-model.sh base.en
 
 RUN make
 
+RUN make medium.en
+
 WORKDIR /root
 
 # RUN
