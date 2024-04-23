@@ -56,8 +56,9 @@ var (
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=yDMZJ7LgrGY"
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=pQWd9YqvloU"
 	// youtubeVideoURL = "https://www.youtube.com/watch?v=pjoQdz0nxf4"
-	youtubeVideoURL = "https://www.youtube.com/watch?v=_Zc-NE8pmtg"
-	taskName        = "test5-what-if-blackhole"
+	// youtubeVideoURL = "https://www.youtube.com/watch?v=_Zc-NE8pmtg"
+	youtubeVideoURL = "https://www.youtube.com/watch?v=WsQmSPt7OdA"
+	taskName        = "test5-nouman-1"
 
 	taskDir   = fmt.Sprintf("%s/%s", baseDir, taskName)
 	stateName = "state.json"
@@ -212,7 +213,7 @@ func main() {
 	//MARK: 7. Transcript vocal
 	logrus.Info("7. TRANSCRIPTING VOCAL TO TEXT")
 	transcriptPath := fmt.Sprintf("%s/%s", taskDir, "transcript")
-	whisperExe := "/root/shared/main"
+	whisperExe := "/root/whisper.cpp/main"
 	if state.Status == "audio_16khz_generated" {
 		// ./main -m /root/shared/models/ggml-base.en.bin -l en -bs 7 -bo 7 -wt 0.04 -ovtt /root/shared/test3-kurzgesagt/transcript-t /root/shared/test3-kurzgesagt/raw_video_audio_Vocals_16KHz.wav
 		// cmdTranscript := exec.Command(whisperExe, "-m", whisperModelPath, "-oj", "-otxt", "-ovtt", "-of", transcriptPath, vocal16KHzPath)

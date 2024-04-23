@@ -115,6 +115,10 @@ RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
 
 WORKDIR /root
 
+# RVC CLI
+
+
+
 # RUN
 
 RUN mkdir -p /root/shared
