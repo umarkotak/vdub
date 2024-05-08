@@ -3,18 +3,18 @@ This app receive youtube video url as an input then it will generate a new video
 
 ## API
 
+```
 POST /vdub/api/dubb/start
 body:
-```
 {
   "task_name": "task-1" // task must unique
   "youtube_url": "",    // this is youtube video url
 }
 ```
 
+```
 GET /vdub/api/dubb/:task_name/status
 response:
-```
 {
   "status": "initialized",
   "progress": [
