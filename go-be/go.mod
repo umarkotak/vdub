@@ -5,6 +5,7 @@ go 1.22.0
 require (
 	github.com/asticode/go-astisub v0.26.2
 	github.com/bregydoc/gtranslate v0.0.0-20200913051839-1bd07f6c1fc5
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/google/generative-ai-go v0.11.0
 	github.com/joho/godotenv v1.5.1
 	github.com/schollz/progressbar/v3 v3.14.2

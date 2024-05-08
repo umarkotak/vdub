@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -16,18 +16,16 @@ import (
 
 	astisub "github.com/asticode/go-astisub"
 	"github.com/bregydoc/gtranslate"
-	"github.com/google/generative-ai-go/genai"
-	"github.com/joho/godotenv"
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/schollz/progressbar/v3"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/api/option"
+	"github.com/umarkotak/vdub-go/config"
+	"github.com/umarkotak/vdub-go/datastore"
+	"github.com/umarkotak/vdub-go/handler"
 )
 
 type (
-	Config struct {
-		GOOGLE_AI_STUDIO_KEY string
-	}
-
 	TaskState struct {
 		Status        string       `json:"status"`         // Enum: initialized
 		Progress      string       `json:"progress"`       //
@@ -47,50 +45,41 @@ type (
 )
 
 var (
-	genaiGiminiProVision = &genai.GenerativeModel{}
-	config               = Config{}
-	baseDir              = "/root/shared"
-
 	whisperModelPath = "/root/whisper.cpp/models/ggml-medium.en-q5_0.bin"
 
-	youtubeVideoURL = "https://www.youtube.com/watch?v=dXdqV1vxhxU"
-	taskName        = "p-1-news-1"
+	youtubeVideoURL = "https://www.youtube.com/watch?v=SLsElgfhZtM"
+	taskName        = "p-1-avicen-1"
 
-	taskDir   = fmt.Sprintf("%s/%s", baseDir, taskName)
+	taskDir   = fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
 	stateName = "state.json"
 	statePath = fmt.Sprintf("%s/%s", taskDir, stateName)
 )
 
 func initialize() {
 	logrus.SetReportCaller(true)
-
-	godotenv.Load()
-
-	config = Config{
-		GOOGLE_AI_STUDIO_KEY: os.Getenv("GOOGLE_AI_STUDIO_KEY"),
-	}
-
-	genaiClient, err := genai.NewClient(
-		context.TODO(),
-		option.WithAPIKey(config.GOOGLE_AI_STUDIO_KEY),
-	)
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
-
-	// genaiGiminiProVision = genaiClient.GenerativeModel("gemini-pro-vision")
-	genaiGiminiProVision = genaiClient.GenerativeModel("gemini-pro")
-	// genaiGiminiProVision.SafetySettings = []*genai.SafetySetting{
-	// 	{
-	// 		Category:  genai.HarmCategoryUnspecified,
-	// 		Threshold: genai.HarmBlockNone,
-	// 	},
-	// }
+	config.InitConfig()
+	datastore.InitDataStore()
 }
 
 func main() {
 	initialize()
+
+	r := chi.NewRouter()
+
+	r.Use(
+		chiMiddleware.RequestID,
+		chiMiddleware.RealIP,
+		chiMiddleware.Recoverer,
+	)
+
+	r.Post("/vdub/api/dubb/start", handler.PostStartDubbTask)
+	r.Get("/vdub/api/dubb/start", handler.GetTaskStatus)
+
+	port := ":29000"
+	err := http.ListenAndServe(port, r)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 
 	state := TaskState{}
 
