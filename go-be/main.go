@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,25 +24,8 @@ import (
 	"github.com/umarkotak/vdub-go/config"
 	"github.com/umarkotak/vdub-go/datastore"
 	"github.com/umarkotak/vdub-go/handler"
-)
-
-type (
-	TaskState struct {
-		Status        string       `json:"status"`         // Enum: initialized
-		Progress      string       `json:"progress"`       //
-		Transcripts   []Transcript `json:"transcripts"`    //
-		RawTranscript string       `json:"raw_transcript"` //
-	}
-
-	Transcript struct {
-		Idx             int64  `json:"idx"`
-		TsStart         string `json:"ts_start"`
-		TsStop          string `json:"ts_stop"`
-		RawText         string `json:"raw_text"`
-		TranslatedText  string `json:"translated_text"`
-		RawAudio        string `json:"raw_audio"`
-		TranslatedAudio string `json:"translated_audio"`
-	}
+	"github.com/umarkotak/vdub-go/model"
+	"github.com/umarkotak/vdub-go/service"
 )
 
 var (
@@ -62,6 +46,8 @@ func initialize() {
 }
 
 func main() {
+	var cmd *exec.Cmd
+
 	initialize()
 
 	r := chi.NewRouter()
@@ -72,37 +58,22 @@ func main() {
 		chiMiddleware.Recoverer,
 	)
 
+	r.Get("/", handler.Ping)
+
 	r.Post("/vdub/api/dubb/start", handler.PostStartDubbTask)
-	r.Get("/vdub/api/dubb/start", handler.GetTaskStatus)
+	r.Get("/vdub/api/dubb/{task_name}/status", handler.GetTaskStatus)
 
 	port := ":29000"
+	logrus.Infof("Listening on port %s", port)
 	err := http.ListenAndServe(port, r)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	state := TaskState{}
-
-	//MARK: 0. Load existing state
-	stateJson, err := os.ReadFile(statePath)
-	if err == nil {
-		json.Unmarshal(stateJson, &state)
-	}
-
-	//MARK: 1. Prepare directory for task
-	logrus.Info("1. PREPARING DIR")
-	cmd := exec.Command("mkdir", "-p", taskDir)
-	_, err = cmd.Output()
+	state, err := service.GetState(context.TODO(), taskDir)
 	if err != nil {
 		logrus.Error(err)
 		return
-	}
-
-	//MARK: 2. Initializing state.json for state management
-	logrus.Info("2. INITIALIZING TASK")
-	if state.Status == "" {
-		state.Status = "initialized"
-		saveState(state)
 	}
 
 	//MARK: 3. Download youtube video
@@ -251,39 +222,6 @@ func main() {
 			return
 		}
 		vttContent := string(vttContentByte)
-
-		// genAIPrompt := fmt.Sprintf(`
-		// 	Help translate this transcript to Bahasa Indonesia.
-		// 	I want the output in vtt. Give me all the result without break.
-
-		// 	%s
-		// `, string(vttContentByte))
-
-		// resp, err := genaiGiminiProVision.GenerateContent(context.TODO(), genai.Text(genAIPrompt))
-		// if err != nil {
-		// 	logrus.Error(err)
-		// 	return
-		// }
-
-		// if resp.Candidates == nil {
-		// 	logrus.Error("nil genai candidates")
-		// 	return
-		// }
-
-		// vttContent := ""
-		// for _, candidate := range resp.Candidates {
-		// 	vttContent += fmt.Sprintf("%+v", candidate.Content.Parts)
-		// 	if vttContent != "" {
-		// 		break
-		// 	}
-		// }
-		// if vttContent == "" {
-		// 	logrus.Error("empty string genai candidates")
-		// 	return
-		// }
-
-		// vttContent = strings.TrimPrefix(vttContent, "[")
-		// vttContent = strings.TrimSuffix(vttContent, "]")
 
 		subObj, _ := astisub.OpenFile(transcriptVttPath)
 
@@ -481,7 +419,7 @@ func main() {
 	fmt.Printf("TASK [%s] DONE\n", taskName)
 }
 
-func saveState(state TaskState) {
+func saveState(state model.TaskState) {
 	stateJson, _ := json.Marshal(state)
 
 	err := os.WriteFile(statePath, stateJson, 0644)
@@ -490,17 +428,7 @@ func saveState(state TaskState) {
 	}
 }
 
-// func formatDuration(d time.Duration) string {
-// 	hours := int(d.Hours())
-// 	minutes := int(d.Minutes()) % 60
-// 	seconds := int(d.Seconds()) % 60
-// 	milliseconds := int(d.Milliseconds()) % 1000
-// 	return fmt.Sprintf("%02d:%02d:%02d.%03d", hours, minutes, seconds, milliseconds)
-// }
-
 func getWavDuration(filename string) (time.Duration, error) {
-	// ffprobe -i /root/shared/test1/generated_speech/32.wav -show_entries format=duration -v quiet -of csv="p=0"
-
 	cmd := exec.Command("ffprobe", "-i", filename, "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

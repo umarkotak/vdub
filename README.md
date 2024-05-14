@@ -36,3 +36,22 @@ _ /base/dir
 |__ /task-2
 |__ /task-n
 ```
+
+
+## Docker Commands
+
+```
+# 1 To run the docker
+
+-- On macbook
+docker run -dit -p 29000:29000 -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared -v /Users/umarramadhana/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
+
+-- On windows
+docker run -dit -p 29000:29000 -v /home/umarkotak/umar/personal_projects/vdub/shared:/root/shared -v /home/umarkotak/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
+
+# 2 To ssh into the container
+
+docker exec -it vdub-core bash
+
+# 3
+```
