@@ -8,8 +8,10 @@ import (
 
 type (
 	Config struct {
-		BaseDir           string // base dir will contain all tasks folder
-		GoogleAiStudioKey string //
+		BaseDir               string // base dir will contain all tasks folder
+		VocalRemoverPy        string
+		VocalRemoverModelPath string
+		GoogleAiStudioKey     string //
 	}
 )
 
@@ -21,8 +23,10 @@ func InitConfig() {
 	godotenv.Load()
 
 	config = Config{
-		BaseDir:           GetStringWithDefault("BASE_DIR", "/root/shared"),
-		GoogleAiStudioKey: os.Getenv("GOOGLE_AI_STUDIO_KEY"),
+		BaseDir:               GetStringWithDefault("BASE_DIR", "/root/shared"),
+		VocalRemoverPy:        GetStringWithDefault("VOCAL_REMOVER_PY", "/root/vocal-remover/inference.py"),
+		VocalRemoverModelPath: GetStringWithDefault("VOCAL_REMOVER_MODEL_PATH", "/root/vocal-remover/baseline.pth"),
+		GoogleAiStudioKey:     os.Getenv("GOOGLE_AI_STUDIO_KEY"),
 	}
 }
 

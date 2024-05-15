@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"os"
@@ -26,6 +24,7 @@ import (
 	"github.com/umarkotak/vdub-go/handler"
 	"github.com/umarkotak/vdub-go/model"
 	"github.com/umarkotak/vdub-go/service"
+	"github.com/umarkotak/vdub-go/utils"
 )
 
 var (
@@ -57,6 +56,8 @@ func main() {
 		chiMiddleware.RealIP,
 		chiMiddleware.Recoverer,
 	)
+
+	handler.Initialize()
 
 	r.Get("/", handler.Ping)
 
@@ -115,11 +116,14 @@ func main() {
 	}
 
 	//MARK: 5. Separate video vocal and sound
-	vocalRemoverExe := "/root/vocal-remover/inference.py"
-	modelPath := "/root/vocal-remover/baseline.pth"
 	logrus.Info("5. SEPARATE VIDEO VOCAL AND SOUND")
 	if state.Status == "video_audio_generated" {
-		cmd = exec.Command("python", vocalRemoverExe, "--input", rawVideoAudioPath, "-P", modelPath, "-o", taskDir)
+		cmd = exec.Command(
+			"python", config.Get().VocalRemoverPy,
+			"--input", rawVideoAudioPath,
+			"-P", config.Get().VocalRemoverModelPath,
+			"-o", taskDir,
+		)
 
 		// stdout, _ := cmd.StdoutPipe()
 		stderr, _ := cmd.StderrPipe()
@@ -131,7 +135,7 @@ func main() {
 			return
 		}
 
-		streamStd(stderr)
+		utils.StreamStd(stderr)
 
 		err = cmd.Wait()
 		fmt.Printf("\n")
@@ -194,7 +198,7 @@ func main() {
 			}).Error(err)
 		}
 
-		streamCmdTranscript(stdout, stderr)
+		utils.StreamCmdTranscript(stdout, stderr)
 
 		err = cmdTranscript.Wait()
 		fmt.Printf("\n")
@@ -455,39 +459,4 @@ func round(num float64) int {
 func toFixed(num float64, precision int) float64 {
 	output := math.Pow(10, float64(precision))
 	return float64(round(num*output)) / output
-}
-
-func streamCmd(stdout, stderr io.ReadCloser) {
-	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		m := scanner.Text()
-		fmt.Println(m)
-	}
-}
-
-func streamStd(std io.ReadCloser) {
-	scanner := bufio.NewScanner(std)
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		m := scanner.Text()
-		fmt.Println(m)
-	}
-}
-
-func streamCmdTranscript(stdout, stderr io.ReadCloser) {
-	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		m := scanner.Text()
-
-		prefix := ""
-		if strings.Contains(m, "[") {
-			prefix = "\n"
-		} else {
-			prefix = " "
-		}
-
-		fmt.Printf("%s%s", prefix, m)
-	}
 }

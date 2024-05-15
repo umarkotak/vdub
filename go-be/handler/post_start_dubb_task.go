@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 	"github.com/umarkotak/vdub-go/config"
 	"github.com/umarkotak/vdub-go/model"
@@ -16,9 +19,15 @@ type (
 		TaskName   string `json:"task_name"`
 		YoutubeUrl string `json:"youtube_url"`
 
-		TaskDir      string
-		RawVideoName string
-		RawVideoPath string
+		TaskDir             string
+		RawVideoName        string
+		RawVideoPath        string
+		RawVideoAudioName   string
+		RawVideoAudioPath   string
+		AudioInstrumentPath string
+		AudioVocalPath      string
+		Vocal16KHzName      string
+		Vocal16KHzPath      string
 	}
 )
 
@@ -26,6 +35,12 @@ func (p *StartDubbTaskParams) Gen() {
 	p.TaskDir = fmt.Sprintf("%s/%s", config.Get().BaseDir, p.TaskName)
 	p.RawVideoName = "raw_video.mp4"
 	p.RawVideoPath = fmt.Sprintf("%s/%s", p.TaskDir, p.RawVideoName)
+	p.RawVideoAudioName = "raw_video_audio.wav"
+	p.RawVideoAudioPath = fmt.Sprintf("%s/%s", p.TaskDir, p.RawVideoAudioName)
+	p.AudioInstrumentPath = fmt.Sprintf("%s_Instrument.wav", strings.TrimSuffix(p.RawVideoAudioPath, ".wav"))
+	p.AudioVocalPath = fmt.Sprintf("%s_Vocals.wav", strings.TrimSuffix(p.RawVideoAudioPath, ".wav"))
+	p.Vocal16KHzName = "raw_video_audio_Vocals_16KHz.wav"
+	p.Vocal16KHzPath = fmt.Sprintf("%s/%s", p.TaskDir, p.Vocal16KHzName)
 }
 
 func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
@@ -47,19 +62,143 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if state.Status == model.STATE_INITIALIZED {
-		err = service.DownloadYoutubeVideo(ctx, params.YoutubeUrl, params.RawVideoPath)
-		if err != nil {
-			logrus.WithContext(r.Context()).Error(err)
-			utils.RenderError(w, r, 422, err)
-			return
+	if handlerState.RunningTask[params.TaskName] {
+		err = fmt.Errorf("task is still running")
+		utils.RenderError(w, r, 422, err)
+		return
+	}
+	go func() {
+		bgCtx := context.Background()
+		bgCtx = context.WithValue(bgCtx, chiMiddleware.RequestIDKey, chiMiddleware.GetReqID(ctx))
+
+		handlerState.RunningTask[params.TaskName] = true
+		logrus.Infof("DUBBING TASK START: %s", params.TaskName)
+		defer func() {
+			handlerState.RunningTask[params.TaskName] = false
+			logrus.Infof("DUBBING TASK FINISH: %s", params.TaskName)
+		}()
+
+		if state.Status == model.STATE_INITIALIZED {
+			logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "download youtube video")
+			err = service.DownloadYoutubeVideo(bgCtx, params.YoutubeUrl, params.RawVideoPath)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_DOWNLOADED)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
 		}
 
-		err = service.SaveStateStatus(ctx, params.TaskDir, state, model.STATE_VIDEO_DOWNLOADED)
-		if err != nil {
-			logrus.WithContext(r.Context()).Error(err)
-			utils.RenderError(w, r, 422, err)
-			return
+		if state.Status == model.STATE_VIDEO_DOWNLOADED {
+			logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "separating video and audio")
+			err = service.SeparateAudio(bgCtx, params.RawVideoPath, params.RawVideoAudioPath)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_AUDIO_GENERATED)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
 		}
-	}
+
+		if state.Status == model.STATE_VIDEO_AUDIO_GENERATED {
+			logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "separate audio vocal and audio")
+			err = service.SeparateVocal(bgCtx, params.RawVideoAudioPath, params.TaskDir)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_AUDIO_SEPARATED)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+		}
+
+		if state.Status == model.STATE_VIDEO_AUDIO_SEPARATED {
+			logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "convert vocal audio to 16KHz")
+			err = service.Generate16KHzAudio(ctx, params.AudioVocalPath, params.Vocal16KHzPath)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_16KHZ_GENERATED)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+		}
+
+		if state.Status == model.STATE_AUDIO_16KHZ_GENERATED {
+			// logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "merging video with instrument")
+
+			// err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_WITH_INSTRUMENT_GENERATED)
+			// if err != nil {
+			// 	logrus.WithContext(bgCtx).Error(err)
+			// 	return
+			// }
+		}
+
+		if state.Status == model.STATE_VIDEO_WITH_INSTRUMENT_GENERATED {
+			// logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "transcript audio")
+
+			// err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_TRANSCRIPTED)
+			// if err != nil {
+			// 	logrus.WithContext(bgCtx).Error(err)
+			// 	return
+			// }
+		}
+
+		if state.Status == model.STATE_AUDIO_TRANSCRIPTED {
+			// logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "translating transcript")
+
+			// err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_TRANSCRIPT_TRANSLATED)
+			// if err != nil {
+			// 	logrus.WithContext(bgCtx).Error(err)
+			// 	return
+			// }
+		}
+
+		if state.Status == model.STATE_TRANSCRIPT_TRANSLATED {
+			// logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "generating translated audio")
+
+			// err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_GENERATED)
+			// if err != nil {
+			// 	logrus.WithContext(bgCtx).Error(err)
+			// 	return
+			// }
+		}
+
+		if state.Status == model.STATE_AUDIO_GENERATED {
+			// logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "adjusting audio speed")
+
+			// err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_ADJUSTED)
+			// if err != nil {
+			// 	logrus.WithContext(bgCtx).Error(err)
+			// 	return
+			// }
+		}
+
+		if state.Status == model.STATE_AUDIO_ADJUSTED {
+			// logrus.Infof("DUBBING TASK RUNNING: %s; %s", params.TaskName, "merge video with translatted audio")
+
+			// err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_DUBBED_VIDEO_GENERATED)
+			// if err != nil {
+			// 	logrus.WithContext(bgCtx).Error(err)
+			// 	return
+			// }
+		}
+
+	}()
+
+	utils.Render(w, r, 200, state, nil)
 }
