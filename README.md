@@ -55,3 +55,5 @@ docker exec -it vdub-core bash
 
 # 3
 ```
+
+python -m bark --text "Hello, my name is Suno." --output_filename "example.wav"

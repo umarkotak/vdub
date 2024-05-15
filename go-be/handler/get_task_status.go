@@ -14,7 +14,9 @@ import (
 func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, chi.URLParam(r, "task_name"))
+	taskName := chi.URLParam(r, "task_name")
+
+	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
 	state, err := service.GetState(ctx, taskDir)
 	if err != nil {
 		logrus.WithContext(r.Context()).Error(err)
@@ -22,5 +24,9 @@ func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.Render(w, r, 200, state, nil)
+	utils.Render(
+		w, r, 200,
+		state.GetTaskStateData(handlerState.RunningTask[taskName]),
+		nil,
+	)
 }

@@ -125,7 +125,17 @@ WORKDIR /root
 
 # RVC CLI
 
+# SUNO.AI
 
+RUN git clone https://github.com/suno-ai/bark
+
+WORKDIR /bark
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install ."
+
+RUN python -m bark --text "Hello, my name is Suno."
+
+WORKDIR /root
 
 # RUN
 
