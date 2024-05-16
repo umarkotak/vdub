@@ -10,7 +10,7 @@ import (
 
 func MergeVideoWithAudio(ctx context.Context, rawVideoPath, audioInstrumentPath, targetPath string) error {
 	cmd := exec.Command(
-		"ffmpeg",
+		"ffmpeg", "-y",
 		"-i", rawVideoPath,
 		"-i", audioInstrumentPath,
 		"-c:v", "copy",

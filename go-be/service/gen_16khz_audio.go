@@ -10,7 +10,7 @@ import (
 
 func Generate16KHzAudio(ctx context.Context, audioPath, targetPath string) error {
 	cmd := exec.Command(
-		"ffmpeg",
+		"ffmpeg", "-y",
 		"-i", audioPath,
 		"-acodec", "pcm_s16le",
 		"-ac", "1",

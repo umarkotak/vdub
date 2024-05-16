@@ -44,7 +44,7 @@ func AdjustVoiceSpeed(ctx context.Context, transcriptPath, originalSpeechDir, ad
 		}
 
 		cmd = exec.Command(
-			"ffmpeg",
+			"ffmpeg", "-y",
 			"-i", genSpeechPath,
 			"-codec:a", "libmp3lame",
 			"-filter:a", fmt.Sprintf("atempo=%v", aTempo),

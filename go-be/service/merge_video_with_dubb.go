@@ -25,7 +25,7 @@ func MergeVideoWithDubb(
 	}
 
 	ffmpegArgs := []string{
-		"-i", instrumentVideoPath,
+		"-y", "-i", instrumentVideoPath,
 	}
 
 	for idx := range subObj.Items {

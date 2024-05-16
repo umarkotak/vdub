@@ -10,7 +10,7 @@ import (
 
 func SeparateAudio(ctx context.Context, rawAudioPath, targetAudioPath string) error {
 	cmd := exec.Command(
-		"ffmpeg",
+		"ffmpeg", "-y",
 		"-i", rawAudioPath,
 		"-vn",
 		"-acodec", "pcm_s16le",

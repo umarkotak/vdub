@@ -16,8 +16,12 @@ import (
 
 type (
 	StartDubbTaskParams struct {
-		TaskName   string `json:"task_name"`
-		YoutubeUrl string `json:"youtube_url"`
+		TaskName       string `json:"task_name"`        // must unique - it will determine the task folder
+		YoutubeUrl     string `json:"youtube_url"`      //
+		VoiceName      string `json:"voice_name"`       // eg: id-ID-ArdiNeural
+		VoiceRate      string `json:"voice_rate"`       // eg: [-/+]10%
+		VoicePitch     string `json:"voice_pitch"`      // eg: [-/+]10Hz
+		ForceStartFrom string `json:"force_start_from"` // used to run from certain state
 
 		TaskDir                  string
 		RawVideoName             string
@@ -86,6 +90,10 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if params.ForceStartFrom != "" {
+		state.Status = params.ForceStartFrom
+	}
+
 	reqID := chiMiddleware.GetReqID(ctx)
 	go func() {
 		bgCtx := context.Background()
@@ -106,7 +114,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_DOWNLOADED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_VIDEO_DOWNLOADED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -121,7 +129,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_AUDIO_GENERATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_VIDEO_AUDIO_GENERATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -129,14 +137,14 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if state.Status == model.STATE_VIDEO_AUDIO_GENERATED {
-			logrus.Infof("DUBBING TASK RUNNING: %s; (3/10) %s", params.TaskName, "separate audio vocal and audio")
+			logrus.Infof("DUBBING TASK RUNNING: %s; (3/10) %s", params.TaskName, "separate audio vocal and instrument")
 			err = service.SeparateVocal(bgCtx, params.RawVideoAudioPath, params.TaskDir)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_AUDIO_SEPARATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_VIDEO_AUDIO_SEPARATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -151,7 +159,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_16KHZ_GENERATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_AUDIO_16KHZ_GENERATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -166,7 +174,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_VIDEO_WITH_INSTRUMENT_GENERATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_VIDEO_WITH_INSTRUMENT_GENERATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -181,7 +189,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_TRANSCRIPTED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_AUDIO_TRANSCRIPTED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -196,7 +204,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_TRANSCRIPT_TRANSLATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_TRANSCRIPT_TRANSLATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -205,13 +213,17 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_TRANSCRIPT_TRANSLATED {
 			logrus.Infof("DUBBING TASK RUNNING: %s; (8/10) %s", params.TaskName, "generating translated audio")
-			err = service.GenerateVoice(bgCtx, params.TranscriptTranslatedPath, params.GeneratedSpeechDir)
+			err = service.GenerateVoice(bgCtx, params.TranscriptTranslatedPath, params.GeneratedSpeechDir, service.VoiceOpts{
+				Name:  params.VoiceName,
+				Rate:  params.VoiceRate,
+				Pitch: params.VoicePitch,
+			})
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_GENERATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_AUDIO_GENERATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -226,7 +238,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_AUDIO_ADJUSTED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_AUDIO_ADJUSTED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -247,7 +259,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = service.SaveStateStatus(bgCtx, params.TaskDir, state, model.STATE_DUBBED_VIDEO_GENERATED)
+			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_DUBBED_VIDEO_GENERATED)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return

@@ -17,7 +17,17 @@ const (
 	VOICE_PITCH = "-10Hz"
 )
 
-func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDir string) error {
+type (
+	VoiceOpts struct {
+		Name  string
+		Rate  string
+		Pitch string
+	}
+)
+
+func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDir string, voiceOpts VoiceOpts) error {
+	voiceOpts.SetDefault()
+
 	cmd := exec.Command("mkdir", "-p", targetSpeechDir)
 	_, err := cmd.Output()
 	if err != nil {
@@ -38,9 +48,9 @@ func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDi
 			"edge-tts",
 			"--text", fmt.Sprintf("\"%s\"", subItem.String()),
 			"--write-media", genSpeechPath,
-			"-v", VOICE_NAME,
-			fmt.Sprintf("--rate=%s", VOICE_RATE),
-			fmt.Sprintf("--pitch=%s", VOICE_PITCH),
+			"-v", voiceOpts.Name,
+			fmt.Sprintf("--rate=%s", voiceOpts.Rate),
+			fmt.Sprintf("--pitch=%s", voiceOpts.Pitch),
 		)
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
@@ -57,4 +67,18 @@ func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDi
 	}
 
 	return nil
+}
+
+func (vo *VoiceOpts) SetDefault() {
+	if vo.Name == "" {
+		vo.Name = VOICE_NAME
+	}
+
+	if vo.Rate == "" {
+		vo.Rate = VOICE_RATE
+	}
+
+	if vo.Pitch == "" {
+		vo.Pitch = VOICE_PITCH
+	}
 }

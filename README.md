@@ -41,7 +41,12 @@ _ /base/dir
 ## Docker Commands
 
 ```
-# 1 To run the docker
+# 1 To build the image
+please adjust the docker image first and match yout processor (intel/arm-apple-m1)
+
+docker build -t vdub-core -f vdub-core/Dockerfile .
+
+# 2 To run the docker
 
 -- On macbook
 docker run -dit -p 29000:29000 -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared -v /Users/umarramadhana/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
@@ -49,11 +54,11 @@ docker run -dit -p 29000:29000 -v /Users/umarramadhana/umar/personal_projects/vd
 -- On windows
 docker run -dit -p 29000:29000 -v /home/umarkotak/umar/personal_projects/vdub/shared:/root/shared -v /home/umarkotak/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
 
-# 2 To ssh into the container
+# 3 To ssh into the container
 
 docker exec -it vdub-core bash
 
-# 3
+# 4
 ```
 
 python -m bark --text "Hello, my name is Suno." --output_filename "example.wav"

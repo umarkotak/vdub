@@ -53,9 +53,9 @@ func SaveState(ctx context.Context, taskDir string, state model.TaskState) error
 	return nil
 }
 
-func SaveStateStatus(ctx context.Context, taskDir string, state model.TaskState, newStatus string) error {
+func SaveStateStatus(ctx context.Context, taskDir string, state *model.TaskState, newStatus string) error {
 	state.Status = newStatus
-	return SaveState(ctx, taskDir, state)
+	return SaveState(ctx, taskDir, *state)
 }
 
 func genStatePath(taskDir string) string {
