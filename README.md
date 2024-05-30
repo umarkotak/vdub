@@ -42,9 +42,9 @@ _ /base/dir
 
 ```
 # 1 To build the image
-please adjust the docker image first and match yout processor (intel/arm-apple-m1)
 
-docker build -t vdub-core -f vdub-core/Dockerfile .
+docker build -t vdub-core -f vdub-core/Dockerfile . --build-arg ARCH=arm64 // for arm chip (eg: apple m1)
+docker build -t vdub-core -f vdub-core/Dockerfile . --build-arg ARCH=amd64 // for amd chip (eg: intel)
 
 # 2 To run the docker
 

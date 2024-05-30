@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+ARG ARCH
+
 RUN apt-get update && apt-get install -y \
   wget \
   curl \
@@ -42,6 +44,8 @@ WORKDIR /root
 
 SHELL ["/bin/bash", "-c"]
 
+## Install [pyenv] - Python env management
+
 RUN curl https://pyenv.run | bash
 
 ENV PYENV_ROOT="/root/.pyenv"
@@ -49,6 +53,7 @@ ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PATH"
 
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
+
 RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 
 RUN pyenv install 3.10.14
@@ -61,31 +66,15 @@ RUN mv /usr/bin/python3 /usr/bin/python3.original
 
 RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
 
+## Install [Yt DLP] - Youtube video downloader
+
 RUN bash -i -c "source ~/.bashrc && python -m pip install yt-dlp llvmlite torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu118"
 
-# Install [Edge TTS] - Text to speech
+## Install [Edge TTS] - Text to speech
 
 RUN bash -i -c "source ~/.bashrc && python -m pip install edge-tts"
 
-# Install [Coqui TTS] - Text to speech
-
-RUN bash -i -c "source ~/.bashrc && python -m pip install TTS"
-
-# Install [Bark] - Text to speech using inference model
-
-# RUN git clone https://github.com/suno-ai/bark
-
-# WORKDIR /root/bark
-
-# RUN bash -i -c "source ~/.bashrc && python -m pip install ."
-
-# ENV SUNO_USE_SMALL_MODELS=True
-
-# ENV USE_OPENMP=1
-
-# RUN python -m bark --text "Hello, my name is Suno." --output_filename "example.wav"
-
-# Install [Vocal remover] - Separate audio file into Instruments and Vocals
+## Install [Vocal remover] - Separate audio file into Instruments and Vocals
 
 WORKDIR /root
 
@@ -97,21 +86,21 @@ RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
 
 RUN curl -OL https://huggingface.co/fabiogra/baseline_vocal_remover/resolve/main/baseline.pth?download=true
 
-# Install [Golang] - GO programming language
+## Install [Golang] - GO programming language
 
 WORKDIR /root
 
-# for apple arm chip
-# RUN curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz
-
-# for intel chip
-RUN curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
-
 RUN mkdir -p go/bin
 
-# RUN tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz
-
-RUN tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz
+RUN if [ "$ARCH" == "arm64" ]; then \
+    curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz; \
+    tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz; \
+    rm -rf go1.22.2.linux-arm64.tar.gz; \
+  else \
+    curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz; \
+    tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz; \
+    rm -rf go1.22.2.linux-amd64.tar.gz; \
+  fi
 
 ENV GOROOT=/usr/local/go
 
@@ -121,11 +110,7 @@ ENV GOBIN=$GOPATH/bin
 
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-RUN rm -rf go1.22.2.linux-arm64.tar.gz
-
-RUN rm -rf go1.22.2.linux-amd64.tar.gz
-
-# Install [Whisper] - Speech to text for transcripting
+## Install [Whisper] - Speech to text for transcripting
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git
 
@@ -141,10 +126,6 @@ RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
 
 WORKDIR /root
 
-# Install [RVC CLI] - Voice synthesize
-
-WORKDIR /root
-
 # RUN
 
 RUN mkdir -p /root/shared
@@ -153,10 +134,4 @@ ENV PYTORCH_ENABLE_MPS_FALLBACK=1
 
 ENV PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
 
-ENV GRADIO_SERVER_NAME="0.0.0.0"
-
-EXPOSE 6969
-
-# ENTRYPOINT [ "python3" ]
-
-# CMD ["app.py"]
+EXPOSE 29000
