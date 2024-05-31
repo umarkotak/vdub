@@ -3,6 +3,13 @@ package model
 import "fmt"
 
 type (
+	TaskData struct {
+		Name            string `json:"name"`
+		Status          string `json:"status"`
+		IsRunning       bool   `json:"is_running"`
+		ProgressSummary string `json:"progress_summary"`
+	}
+
 	TaskState struct {
 		Status        string       `json:"status"`         // Enum: initialized
 		Progress      string       `json:"progress"`       //
