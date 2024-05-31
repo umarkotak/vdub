@@ -27,6 +27,7 @@ func main() {
 		chiMiddleware.RequestID,
 		chiMiddleware.Recoverer,
 		middleware.CommonContext,
+		middleware.Cors,
 	)
 
 	handler.Initialize()

@@ -3,32 +3,47 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/umarkotak/vdub-go/config"
-	"github.com/umarkotak/vdub-go/service"
 	"github.com/umarkotak/vdub-go/utils"
 )
 
+type (
+	TaskData struct {
+		Name string `json:"name"`
+	}
+)
+
 func GetTaskList(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	commonCtx := utils.GetCommonCtx(r)
 
-	taskName := chi.URLParam(r, "task_name")
-	taskName = fmt.Sprintf("task-%s-%s", commonCtx.DirectUsername, taskName)
+	myProjectPrefix := fmt.Sprintf("task-%s", commonCtx.DirectUsername)
 
-	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
-	state, err := service.GetState(ctx, taskDir)
+	files, err := os.ReadDir(config.Get().BaseDir)
 	if err != nil {
 		logrus.WithContext(r.Context()).Error(err)
 		utils.RenderError(w, r, 422, err)
 		return
 	}
 
+	taskList := []TaskData{}
+
+	for _, file := range files {
+		if file.IsDir() {
+			if strings.HasPrefix(file.Name(), myProjectPrefix) {
+				taskList = append(taskList, TaskData{
+					Name: file.Name(),
+				})
+			}
+		}
+	}
+
 	utils.Render(
 		w, r, 200,
-		state.GetTaskStateData(handlerState.RunningTask[taskName]),
+		taskList,
 		nil,
 	)
 }

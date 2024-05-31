@@ -30,3 +30,12 @@ func RenderError(w http.ResponseWriter, r *http.Request, statusCode int, err err
 		"message": err.Error(),
 	})
 }
+
+func SetCorsHeaders(w http.ResponseWriter) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PATCH, PUT, DELETE")
+	w.Header().Add(
+		"Access-Control-Allow-Headers",
+		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Animapu-User-Uid, X-Visitor-Id, X-From-Path",
+	)
+}
