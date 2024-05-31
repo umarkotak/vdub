@@ -1,7 +1,5 @@
 FROM ubuntu:24.04
 
-ARG ARCH
-
 RUN apt-get update && apt-get install -y \
   wget \
   curl \
@@ -86,31 +84,9 @@ RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
 
 RUN curl -OL https://huggingface.co/fabiogra/baseline_vocal_remover/resolve/main/baseline.pth?download=true
 
-## Install [Golang] - GO programming language
+## Install [Whisper] - Speech to text for transcripting
 
 WORKDIR /root
-
-RUN mkdir -p go/bin
-
-RUN if [ "$ARCH" == "arm64" ]; then \
-    curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz; \
-    tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz; \
-    rm -rf go1.22.2.linux-arm64.tar.gz; \
-  else \
-    curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz; \
-    tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz; \
-    rm -rf go1.22.2.linux-amd64.tar.gz; \
-  fi
-
-ENV GOROOT=/usr/local/go
-
-ENV GOPATH=/root/go
-
-ENV GOBIN=$GOPATH/bin
-
-ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-
-## Install [Whisper] - Speech to text for transcripting
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git
 
@@ -124,14 +100,46 @@ RUN make quantize
 
 RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
 
+## Install [Golang] - GO programming language
+
 WORKDIR /root
+
+RUN mkdir -p go/bin
+
+RUN curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz
+
+RUN curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
+
+ARG ARCH
+
+RUN if [ "$ARCH" == "arm64" ]; then \
+    tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz; \
+  else \
+    tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz; \
+  fi
+
+RUN rm -rf go1.22.2.linux-arm64.tar.gz
+
+RUN rm -rf go1.22.2.linux-amd64.tar.gz
+
+ENV GOROOT=/usr/local/go
+
+ENV GOPATH=/root/go
+
+ENV GOBIN=$GOPATH/bin
+
+ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 # RUN
 
 RUN mkdir -p /root/shared
 
+RUN mkdir -p /root/vdub
+
 ENV PYTORCH_ENABLE_MPS_FALLBACK=1
 
 ENV PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
+
+WORKDIR /root/vdub
 
 EXPOSE 29000

@@ -9,6 +9,7 @@ import (
 	"github.com/umarkotak/vdub-go/config"
 	"github.com/umarkotak/vdub-go/datastore"
 	"github.com/umarkotak/vdub-go/handler"
+	"github.com/umarkotak/vdub-go/middleware"
 )
 
 func initialize() {
@@ -24,8 +25,8 @@ func main() {
 
 	r.Use(
 		chiMiddleware.RequestID,
-		chiMiddleware.RealIP,
 		chiMiddleware.Recoverer,
+		middleware.CommonContext,
 	)
 
 	handler.Initialize()
@@ -33,7 +34,8 @@ func main() {
 	r.Get("/", handler.Ping)
 
 	r.Post("/vdub/api/dubb/start", handler.PostStartDubbTask)
-	r.Get("/vdub/api/dubb/{task_name}/status", handler.GetTaskStatus)
+	r.Get("/vdub/api/dubb/tasks", handler.GetTaskList)
+	r.Get("/vdub/api/dubb/task/{task_name}/status", handler.GetTaskStatus)
 
 	port := ":29000"
 	logrus.Infof("Listening on port %s", port)

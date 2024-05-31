@@ -43,13 +43,16 @@ _ /base/dir
 ```
 # 1 To build the image
 
-docker build -t vdub-core -f vdub-core/Dockerfile . --build-arg ARCH=arm64 // for arm chip (eg: apple m1)
-docker build -t vdub-core -f vdub-core/Dockerfile . --build-arg ARCH=amd64 // for amd chip (eg: intel)
+docker build -t vdub-core -f Dockerfile . --build-arg ARCH=arm64 // for arm chip (eg: apple m1)
+
+docker build -t vdub-core -f Dockerfile . --build-arg ARCH=amd64 // for amd chip (eg: intel)
 
 # 2 To run the docker
 
 -- On macbook
-docker run -dit -p 29000:29000 -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared -v /Users/umarramadhana/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
+docker run -dit -p 29000:29000 -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared -v /Users/umarramadhana/umar/personal_projects/vdub:/root/vdub --name vdub-core vdub-core
+
+docker run -dit -p 29000:29000 -v ./shared:/root/shared -v .:/root/vdub --name vdub-core vdub-core
 
 -- On windows
 docker run -dit -p 29000:29000 -v /home/umarkotak/umar/personal_projects/vdub/shared:/root/shared -v /home/umarkotak/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core

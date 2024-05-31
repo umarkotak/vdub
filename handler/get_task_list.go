@@ -11,7 +11,7 @@ import (
 	"github.com/umarkotak/vdub-go/utils"
 )
 
-func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
+func GetTaskList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	commonCtx := utils.GetCommonCtx(r)
 

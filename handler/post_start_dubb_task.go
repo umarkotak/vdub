@@ -46,7 +46,8 @@ const (
 	TOTAL_STEPS = "10"
 )
 
-func (p *StartDubbTaskParams) Gen() {
+func (p *StartDubbTaskParams) Gen(username string) {
+	p.TaskName = fmt.Sprintf("task-%s-%s", username, p.TaskName)
 	p.TaskDir = fmt.Sprintf("%s/%s", config.Get().BaseDir, p.TaskName)
 	p.RawVideoName = "raw_video.mp4"
 	p.RawVideoPath = fmt.Sprintf("%s/%s", p.TaskDir, p.RawVideoName)
@@ -67,6 +68,7 @@ func (p *StartDubbTaskParams) Gen() {
 
 func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
 
 	params := StartDubbTaskParams{}
 	err := utils.BindJson(r, &params)
@@ -75,7 +77,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		utils.RenderError(w, r, 400, err)
 		return
 	}
-	params.Gen()
+	params.Gen(commonCtx.DirectUsername)
 
 	state, err := service.GetState(ctx, params.TaskDir)
 	if err != nil {
