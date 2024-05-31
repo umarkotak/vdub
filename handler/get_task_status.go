@@ -15,8 +15,7 @@ func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	commonCtx := utils.GetCommonCtx(r)
 
-	taskName := chi.URLParam(r, "task_name")
-	taskName = fmt.Sprintf("task-%s-%s", commonCtx.DirectUsername, taskName)
+	taskName := utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name"))
 
 	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
 	state, err := service.GetState(ctx, taskDir)

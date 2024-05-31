@@ -8,7 +8,6 @@ import (
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
-	"github.com/umarkotak/vdub-go/config"
 	"github.com/umarkotak/vdub-go/model"
 	"github.com/umarkotak/vdub-go/service"
 	"github.com/umarkotak/vdub-go/utils"
@@ -47,8 +46,8 @@ const (
 )
 
 func (p *StartDubbTaskParams) Gen(username string) {
-	p.TaskName = fmt.Sprintf("task-%s-%s", username, p.TaskName)
-	p.TaskDir = fmt.Sprintf("%s/%s", config.Get().BaseDir, p.TaskName)
+	p.TaskName = utils.GenTaskName(username, p.TaskName)
+	p.TaskDir = utils.GenTaskDir(p.TaskName)
 	p.RawVideoName = "raw_video.mp4"
 	p.RawVideoPath = fmt.Sprintf("%s/%s", p.TaskDir, p.RawVideoName)
 	p.RawVideoAudioName = "raw_video_audio.wav"
