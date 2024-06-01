@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/asticode/go-astisub"
 	"github.com/sirupsen/logrus"
@@ -16,9 +15,9 @@ type (
 	}
 
 	TranscriptLine struct {
-		StartAt time.Duration
-		EndAt   time.Duration
-		Value   string
+		StartAt string `json:"start_at"`
+		EndAt   string `json:"end_at"`
+		Value   string `json:"value"`
 	}
 )
 
@@ -39,8 +38,8 @@ func GetTranscript(ctx context.Context, taskName, transcriptType string) (Transc
 	transcriptLines := []TranscriptLine{}
 	for _, oneLine := range transcriptSubtitle.Items {
 		transcriptLines = append(transcriptLines, TranscriptLine{
-			StartAt: oneLine.StartAt,
-			EndAt:   oneLine.EndAt,
+			StartAt: utils.DurationToFormattedDuration(oneLine.StartAt),
+			EndAt:   utils.DurationToFormattedDuration(oneLine.EndAt),
 			Value:   oneLine.String(),
 		})
 	}
