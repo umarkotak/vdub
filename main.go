@@ -37,8 +37,8 @@ func main() {
 	r.Post("/vdub/api/dubb/start", handler.PostStartDubbTask)
 	r.Get("/vdub/api/dubb/tasks", handler.GetTaskList)
 	r.Get("/vdub/api/dubb/task/{task_name}/status", handler.GetTaskStatus)
-	r.Get("/vdub/api/dubb/task/{task_name}/transcript/original", handler.GetTranscriptOriginal)
-	r.Get("/vdub/api/dubb/task/{task_name}/transcript/translated", handler.GetTranscriptTranslated)
+	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", handler.GetTranscript)
+	r.Get("/vdub/api/dubb/task/{task_name}/video/{video_type}", handler.ServeVideo)
 
 	port := ":29000"
 	logrus.Infof("Listening on port %s", port)
