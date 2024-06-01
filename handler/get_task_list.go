@@ -17,7 +17,7 @@ func GetTaskList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	commonCtx := utils.GetCommonCtx(r)
 
-	myProjectPrefix := fmt.Sprintf("task-%s", commonCtx.DirectUsername)
+	myProjectPrefix := fmt.Sprintf("task-%s-", commonCtx.DirectUsername)
 
 	files, err := os.ReadDir(config.Get().BaseDir)
 	if err != nil {
@@ -42,7 +42,7 @@ func GetTaskList(w http.ResponseWriter, r *http.Request) {
 			}
 
 			taskList = append(taskList, model.TaskData{
-				Name:            taskName,
+				Name:            strings.TrimPrefix(taskName, myProjectPrefix),
 				Status:          stateDetail.Status,
 				IsRunning:       stateDetail.IsRunning,
 				ProgressSummary: stateDetail.ProgressSummary,
