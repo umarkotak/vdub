@@ -35,14 +35,14 @@ func GetState(ctx context.Context, taskDir string) (model.TaskState, error) {
 	return state, nil
 }
 
-func InitState(state model.TaskState) {
+func InitState(ctx context.Context, state model.TaskState) {
 
 }
 
 func SaveState(ctx context.Context, taskDir string, state model.TaskState) error {
 	statePath := genStatePath(taskDir)
 
-	stateJson, _ := json.Marshal(state)
+	stateJson, _ := json.MarshalIndent(state, " ", "  ")
 
 	err := os.WriteFile(statePath, stateJson, 0644)
 	if err != nil {

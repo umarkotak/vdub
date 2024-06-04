@@ -15,17 +15,18 @@ import (
 
 type (
 	StartDubbTaskParams struct {
-		TaskName       string `json:"task_name"`        // must unique - it will determine the task folder
-		YoutubeUrl     string `json:"youtube_url"`      //
-		VoiceName      string `json:"voice_name"`       // eg: id-ID-ArdiNeural
-		VoiceRate      string `json:"voice_rate"`       // eg: [-/+]10%
-		VoicePitch     string `json:"voice_pitch"`      // eg: [-/+]10Hz
-		ForceStartFrom string `json:"force_start_from"` // used to run from certain state
+		TaskName       string `json:"task_name" validate:"required"`   // must unique - it will determine the task folder
+		YoutubeUrl     string `json:"youtube_url" validate:"required"` //
+		VoiceName      string `json:"voice_name" validate:"required"`  // eg: id-ID-ArdiNeural
+		VoiceRate      string `json:"voice_rate" validate:"required"`  // eg: [-/+]10%
+		VoicePitch     string `json:"voice_pitch" validate:"required"` // eg: [-/+]10Hz
+		ForceStartFrom string `json:"force_start_from"`                // used to run from certain state
 
 		TaskDir                  string
 		RawVideoName             string
 		RawVideoPath             string
 		RawVideoAudioName        string
+		VideoScreenshotPath      string
 		RawVideoAudioPath        string
 		AudioInstrumentPath      string
 		AudioVocalPath           string
@@ -41,13 +42,10 @@ type (
 	}
 )
 
-const (
-	TOTAL_STEPS = "10"
-)
-
 func (p *StartDubbTaskParams) Gen(username string) {
 	p.TaskName = utils.GenTaskName(username, p.TaskName)
 	p.TaskDir = utils.GenTaskDir(p.TaskName)
+	p.VideoScreenshotPath = fmt.Sprintf("%s/%s", p.TaskDir, "video_snapshot.jpg")
 	p.RawVideoName = "raw_video.mp4"
 	p.RawVideoPath = fmt.Sprintf("%s/%s", p.TaskDir, p.RawVideoName)
 	p.RawVideoAudioName = "raw_video_audio.wav"
@@ -84,6 +82,18 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		utils.RenderError(w, r, 422, err)
 		return
 	}
+	if state.YoutubeUrl == "" {
+		state.YoutubeUrl = params.YoutubeUrl
+	}
+	if state.VoiceName == "" {
+		state.VoiceName = params.VoiceName
+	}
+	if state.VoiceRate == "" {
+		state.VoiceRate = params.VoiceRate
+	}
+	if state.VoicePitch == "" {
+		state.VoicePitch = params.VoicePitch
+	}
 
 	if handlerState.RunningTask[params.TaskName] {
 		err = fmt.Errorf("task is still running")
@@ -109,7 +119,13 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_INITIALIZED {
 			logrus.Infof("DUBBING TASK RUNNING: %s; (1/10) %s", params.TaskName, "download youtube video")
-			err = service.DownloadYoutubeVideo(bgCtx, params.YoutubeUrl, params.RawVideoPath)
+			err = service.DownloadYoutubeVideo(bgCtx, state.YoutubeUrl, params.RawVideoPath)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+				return
+			}
+
+			err = service.GenerateVideoSnapshot(bgCtx, params.RawVideoPath, params.VideoScreenshotPath)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -215,9 +231,9 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		if state.Status == model.STATE_TRANSCRIPT_TRANSLATED {
 			logrus.Infof("DUBBING TASK RUNNING: %s; (8/10) %s", params.TaskName, "generating translated audio")
 			err = service.GenerateVoice(bgCtx, params.TranscriptTranslatedPath, params.GeneratedSpeechDir, service.VoiceOpts{
-				Name:  params.VoiceName,
-				Rate:  params.VoiceRate,
-				Pitch: params.VoicePitch,
+				Name:  state.VoiceName,
+				Rate:  state.VoiceRate,
+				Pitch: state.VoicePitch,
 			})
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)

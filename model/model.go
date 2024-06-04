@@ -4,10 +4,11 @@ import "fmt"
 
 type (
 	TaskData struct {
-		Name            string `json:"name"`
-		Status          string `json:"status"`
-		IsRunning       bool   `json:"is_running"`
-		ProgressSummary string `json:"progress_summary"`
+		Name               string `json:"name"`
+		Status             string `json:"status"`
+		CurrentStatusHuman string `json:"current_status_human"`
+		IsRunning          bool   `json:"is_running"`
+		ProgressSummary    string `json:"progress_summary"`
 	}
 
 	TaskState struct {
@@ -15,6 +16,11 @@ type (
 		Progress      string       `json:"progress"`       //
 		Transcripts   []Transcript `json:"transcripts"`    //
 		RawTranscript string       `json:"raw_transcript"` //
+
+		YoutubeUrl string `json:"youtube_url" validate:"required"` //
+		VoiceName  string `json:"voice_name" validate:"required"`  // eg: id-ID-ArdiNeural
+		VoiceRate  string `json:"voice_rate" validate:"required"`  // eg: [-/+]10%
+		VoicePitch string `json:"voice_pitch" validate:"required"` // eg: [-/+]10Hz
 	}
 
 	Transcript struct {
@@ -33,17 +39,18 @@ type (
 	}
 
 	GetTaskStateData struct {
-		Status          string              `json:"status"`
-		IsRunning       bool                `json:"is_running"`
-		ProgressSummary string              `json:"progress_summary"`
-		Progresses      []TaskStateProgress `json:"progresses"`
+		Status             string              `json:"status"`
+		CurrentStatusHuman string              `json:"current_status_human"`
+		IsRunning          bool                `json:"is_running"`
+		ProgressSummary    string              `json:"progress_summary"`
+		Progresses         []TaskStateProgress `json:"progresses"`
 	}
 )
 
 func (ts *TaskState) GetTaskStateData(isRunning bool) GetTaskStateData {
 	progresses := []TaskStateProgress{}
 
-	currStateIdx := STATE_IDX_MAP[ts.Status]
+	currStateIdx := STATE_IDX_MAP[ts.Status].Idx
 
 	for idx, stateName := range STATE_IDX_ARR {
 		progress := "not_done"
@@ -60,9 +67,10 @@ func (ts *TaskState) GetTaskStateData(isRunning bool) GetTaskStateData {
 	}
 
 	return GetTaskStateData{
-		Status:          ts.Status,
-		IsRunning:       isRunning,
-		ProgressSummary: fmt.Sprintf("%v/%v", currStateIdx, 10),
-		Progresses:      progresses,
+		Status:             ts.Status,
+		CurrentStatusHuman: STATE_IDX_MAP[ts.Status].StatusHuman,
+		IsRunning:          isRunning,
+		ProgressSummary:    fmt.Sprintf("%v/%v", currStateIdx, 10),
+		Progresses:         progresses,
 	}
 }

@@ -45,7 +45,7 @@ func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDi
 	for idx, subItem := range subObj.Items {
 		genSpeechPath := fmt.Sprintf("%s/%v.wav", targetSpeechDir, idx)
 		cmd = exec.Command(
-			"edge-tts",
+			"/root/.pyenv/shims/edge-tts",
 			"--text", fmt.Sprintf("\"%s\"", subItem.String()),
 			"--write-media", genSpeechPath,
 			"-v", voiceOpts.Name,

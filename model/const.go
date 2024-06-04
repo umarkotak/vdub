@@ -29,17 +29,24 @@ var (
 		STATE_DUBBED_VIDEO_GENERATED,
 	}
 
-	STATE_IDX_MAP = map[string]int{
-		STATE_INITIALIZED:                     0,
-		STATE_VIDEO_DOWNLOADED:                1,
-		STATE_VIDEO_AUDIO_GENERATED:           2,
-		STATE_VIDEO_AUDIO_SEPARATED:           3,
-		STATE_AUDIO_16KHZ_GENERATED:           4,
-		STATE_VIDEO_WITH_INSTRUMENT_GENERATED: 5,
-		STATE_AUDIO_TRANSCRIPTED:              6,
-		STATE_TRANSCRIPT_TRANSLATED:           7,
-		STATE_AUDIO_GENERATED:                 8,
-		STATE_AUDIO_ADJUSTED:                  9,
-		STATE_DUBBED_VIDEO_GENERATED:          10,
+	STATE_IDX_MAP = map[string]STATE_DETAIL{
+		STATE_INITIALIZED:                     {Idx: 0, StatusHuman: "Downloading Video"},
+		STATE_VIDEO_DOWNLOADED:                {Idx: 1, StatusHuman: "Generating Audio"},
+		STATE_VIDEO_AUDIO_GENERATED:           {Idx: 2, StatusHuman: "Separating Audio Instrument"},
+		STATE_VIDEO_AUDIO_SEPARATED:           {Idx: 3, StatusHuman: "Converting Audio"},
+		STATE_AUDIO_16KHZ_GENERATED:           {Idx: 4, StatusHuman: "Generating Video Instrument"},
+		STATE_VIDEO_WITH_INSTRUMENT_GENERATED: {Idx: 5, StatusHuman: "Transcripting"},
+		STATE_AUDIO_TRANSCRIPTED:              {Idx: 6, StatusHuman: "Translating"},
+		STATE_TRANSCRIPT_TRANSLATED:           {Idx: 7, StatusHuman: "Generating Voice"},
+		STATE_AUDIO_GENERATED:                 {Idx: 8, StatusHuman: "Adjusting Voice"},
+		STATE_AUDIO_ADJUSTED:                  {Idx: 9, StatusHuman: "Merging Video"},
+		STATE_DUBBED_VIDEO_GENERATED:          {Idx: 10, StatusHuman: "Completed"},
+	}
+)
+
+type (
+	STATE_DETAIL struct {
+		Idx         int
+		StatusHuman string
 	}
 )

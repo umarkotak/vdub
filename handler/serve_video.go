@@ -24,3 +24,13 @@ func ServeVideo(w http.ResponseWriter, r *http.Request) {
 	// w.Header().Set("Content-Type", "application/x-mpegURL")
 	http.ServeFile(w, r, mediaFile)
 }
+
+func ServeSnapshot(w http.ResponseWriter, r *http.Request) {
+	commonCtx := utils.GetCommonCtx(r)
+
+	taskName := utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name"))
+
+	mediaFile := fmt.Sprintf("%s/%s/%s", config.Get().BaseDir, taskName, "video_snapshot.jpg")
+
+	http.ServeFile(w, r, mediaFile)
+}

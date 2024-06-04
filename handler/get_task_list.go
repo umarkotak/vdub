@@ -42,10 +42,11 @@ func GetTaskList(w http.ResponseWriter, r *http.Request) {
 			}
 
 			taskList = append(taskList, model.TaskData{
-				Name:            strings.TrimPrefix(taskName, myProjectPrefix),
-				Status:          stateDetail.Status,
-				IsRunning:       stateDetail.IsRunning,
-				ProgressSummary: stateDetail.ProgressSummary,
+				Name:               strings.TrimPrefix(taskName, myProjectPrefix),
+				Status:             stateDetail.Status,
+				CurrentStatusHuman: stateDetail.CurrentStatusHuman,
+				IsRunning:          stateDetail.IsRunning,
+				ProgressSummary:    stateDetail.ProgressSummary,
 			})
 		}
 	}
