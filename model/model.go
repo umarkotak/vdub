@@ -34,8 +34,9 @@ type (
 	}
 
 	TaskStateProgress struct {
-		Name     string `json:"name"`
-		Progress string `json:"progress"` // Enum: not_done, running, done
+		Name      string `json:"name"`
+		NameHuman string `json:"name_human"`
+		Progress  string `json:"progress"` // Enum: not_done, running, done
 	}
 
 	GetTaskStateData struct {
@@ -61,8 +62,9 @@ func (ts *TaskState) GetTaskStateData(isRunning bool) GetTaskStateData {
 		}
 
 		progresses = append(progresses, TaskStateProgress{
-			Name:     stateName,
-			Progress: progress,
+			Name:      stateName,
+			NameHuman: STATE_IDX_MAP[stateName].StatusHuman,
+			Progress:  progress,
 		})
 	}
 

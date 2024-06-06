@@ -95,14 +95,30 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		state.VoicePitch = params.VoicePitch
 	}
 
+	if params.ForceStartFrom != "" {
+		state.Status = params.ForceStartFrom
+
+		if params.VoiceName != "" {
+			state.VoiceName = params.VoiceName
+		}
+		if params.VoiceRate != "" {
+			state.VoiceRate = params.VoiceRate
+		}
+		if params.VoicePitch != "" {
+			state.VoicePitch = params.VoicePitch
+		}
+
+		err = service.SaveStateStatus(ctx, params.TaskDir, &state, params.ForceStartFrom)
+		if err != nil {
+			logrus.WithContext(ctx).Error(err)
+			return
+		}
+	}
+
 	if handlerState.RunningTask[params.TaskName] {
 		err = fmt.Errorf("task is still running")
 		utils.RenderError(w, r, 422, err)
 		return
-	}
-
-	if params.ForceStartFrom != "" {
-		state.Status = params.ForceStartFrom
 	}
 
 	reqID := chiMiddleware.GetReqID(ctx)
