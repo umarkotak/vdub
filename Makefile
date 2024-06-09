@@ -7,6 +7,9 @@ build_amd:
 docker_run:
 	docker start vdub-core || docker run -it -d -p 29000:29000 -v ./shared:/root/shared -v .:/root/vdub --name vdub-core vdub-core go run .
 
+docker_run_win:
+	docker start vdub-core || docker run -it -d -p 29000:29000 -v /home/umarkotak/umar/personal_projects/go/vdub/shared:/root/shared -v /home/umarkotak/umar/personal_projects/go/vdub:/root/vdub --name vdub-core vdub-core go run .
+
 docker_stop:
 	docker stop vdub-core
 
