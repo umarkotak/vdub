@@ -9,6 +9,7 @@ import (
 	"github.com/umarkotak/vdub-go/config"
 	"github.com/umarkotak/vdub-go/datastore"
 	"github.com/umarkotak/vdub-go/handler"
+	"github.com/umarkotak/vdub-go/handler/task_handler"
 	"github.com/umarkotak/vdub-go/middleware"
 )
 
@@ -28,21 +29,23 @@ func main() {
 		chiMiddleware.Recoverer,
 		middleware.CommonContext,
 		middleware.Cors,
+		middleware.LogRequest,
 	)
 
-	handler.Initialize()
+	task_handler.Initialize()
 
 	r.Get("/", handler.Ping)
 
-	r.Post("/vdub/api/dubb/start", handler.PostStartDubbTask)
-	r.Delete("/vdub/api/dubb/task/{task_name}", handler.DeleteTask)
-	r.Get("/vdub/api/dubb/tasks", handler.GetTaskList)
-	r.Get("/vdub/api/dubb/task/{task_name}/status", handler.GetTaskStatus)
-	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", handler.GetTranscript)
-	r.Post("/vdub/api/dubb/task/{task_name}/transcript/update", handler.PostTranscriptUpdate)
+	r.Post("/vdub/api/dubb/start", task_handler.PostStartDubbTask)
+	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
+	r.Get("/vdub/api/dubb/tasks", task_handler.GetTaskList)
+	r.Get("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)
+	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)
+	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", task_handler.GetTranscript)
+	r.Post("/vdub/api/dubb/task/{task_name}/transcript/update", task_handler.PostTranscriptUpdate)
 
-	r.Get("/vdub/api/dubb/task/{task_name}/video/{video_type}", handler.ServeVideo)
-	r.Get("/vdub/api/dubb/task/{task_name}/video/snapshot", handler.ServeSnapshot)
+	r.Get("/vdub/api/dubb/task/{task_name}/video/{video_type}", task_handler.ServeVideo)
+	r.Get("/vdub/api/dubb/task/{task_name}/video/snapshot", task_handler.ServeSnapshot)
 
 	port := ":29000"
 	logrus.Infof("Listening on port %s", port)

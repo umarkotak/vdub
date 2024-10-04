@@ -25,6 +25,7 @@ func TranscriptAudio(ctx context.Context, audioPath, transcriptPath string) erro
 		"--entropy-thold", ENTHROPY_THOLD,
 		"--max-context", MAX_CONTEXT,
 		"-of", transcriptPath,
+		"--translate",
 		audioPath,
 	)
 
