@@ -31,6 +31,7 @@ func main() {
 		middleware.Cors,
 		middleware.LogRequest,
 	)
+	r.NotFound(handler.NotFound)
 
 	task_handler.Initialize()
 
@@ -40,9 +41,9 @@ func main() {
 	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
 	r.Get("/vdub/api/dubb/tasks", task_handler.GetTaskList)
 	r.Get("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)
-	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)
+	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.UpdateTaskStatus)
+	r.Patch("/vdub/api/dubb/task/{task_name}/transcript", task_handler.PatchTranscriptUpdate)
 	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", task_handler.GetTranscript)
-	r.Post("/vdub/api/dubb/task/{task_name}/transcript/update", task_handler.PostTranscriptUpdate)
 
 	r.Get("/vdub/api/dubb/task/{task_name}/video/{video_type}", task_handler.ServeVideo)
 	r.Get("/vdub/api/dubb/task/{task_name}/video/snapshot", task_handler.ServeSnapshot)

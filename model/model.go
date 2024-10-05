@@ -23,16 +23,6 @@ type (
 		VoicePitch string `json:"voice_pitch" validate:"required"` // eg: [-/+]10Hz
 	}
 
-	Transcript struct {
-		Idx             int64  `json:"idx"`
-		TsStart         string `json:"ts_start"`
-		TsStop          string `json:"ts_stop"`
-		RawText         string `json:"raw_text"`
-		TranslatedText  string `json:"translated_text"`
-		RawAudio        string `json:"raw_audio"`
-		TranslatedAudio string `json:"translated_audio"`
-	}
-
 	TaskStateProgress struct {
 		Name      string `json:"name"`
 		NameHuman string `json:"name_human"`

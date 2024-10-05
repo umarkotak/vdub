@@ -33,7 +33,7 @@ func GetTaskList(w http.ResponseWriter, r *http.Request) {
 			taskName := file.Name()
 			taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
 
-			state, err := service.GetState(ctx, taskDir)
+			state, err := service.GetState(ctx, taskDir, model.TaskState{})
 			stateDetail := state.GetTaskStateData(handlerState.RunningTask[taskName])
 			if err != nil {
 				logrus.WithContext(r.Context()).Error(err)

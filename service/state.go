@@ -11,7 +11,7 @@ import (
 	"github.com/umarkotak/vdub-go/model"
 )
 
-func GetState(ctx context.Context, taskDir string) (model.TaskState, error) {
+func GetState(ctx context.Context, taskDir string, initialState model.TaskState) (model.TaskState, error) {
 	statePath := genStatePath(taskDir)
 
 	state := model.TaskState{}
@@ -29,10 +29,10 @@ func GetState(ctx context.Context, taskDir string) (model.TaskState, error) {
 		return state, err
 	}
 
-	state.Status = "initialized"
-	SaveState(ctx, taskDir, state)
+	initialState.Status = "initialized"
+	SaveState(ctx, taskDir, initialState)
 
-	return state, nil
+	return initialState, nil
 }
 
 func InitState(ctx context.Context, state model.TaskState) {

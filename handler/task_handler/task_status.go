@@ -19,7 +19,7 @@ func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 	taskName := utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name"))
 
 	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
-	state, err := service.GetState(ctx, taskDir)
+	state, err := service.GetState(ctx, taskDir, model.TaskState{})
 	if err != nil {
 		logrus.WithContext(r.Context()).Error(err)
 		utils.RenderError(w, r, 422, err)
@@ -41,7 +41,7 @@ func UpdateTaskStatus(w http.ResponseWriter, r *http.Request) {
 	commonCtx := utils.GetCommonCtx(r)
 
 	params := struct {
-		TaskName string `json:"task_name"`
+		TaskName string `json:"-"`
 		Status   string `json:"status"`
 	}{
 		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
@@ -54,17 +54,19 @@ func UpdateTaskStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
-	state, err := service.GetState(ctx, taskDir)
+	taskDir := utils.GenTaskDir(params.TaskName)
+
+	state, err := service.GetState(ctx, taskDir, model.TaskState{})
 	if err != nil {
 		logrus.WithContext(r.Context()).Error(err)
 		utils.RenderError(w, r, 422, err)
 		return
 	}
 
-	err = service.SaveStateStatus(ctx, params.TaskDir, &state, model.STATE_VIDEO_DOWNLOADED)
+	err = service.SaveStateStatus(ctx, taskDir, &state, params.Status)
 	if err != nil {
-		logrus.WithContext(bgCtx).Error(err)
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 422, err)
 		return
 	}
 
@@ -72,7 +74,7 @@ func UpdateTaskStatus(w http.ResponseWriter, r *http.Request) {
 		w, r, 200,
 		map[string]any{
 			"state":       state,
-			"state_human": state.GetTaskStateData(handlerState.RunningTask[taskName]),
+			"state_human": state.GetTaskStateData(handlerState.RunningTask[params.TaskName]),
 		},
 		nil,
 	)
