@@ -114,3 +114,33 @@ docker update --cpus="2048" vdub-core
   python setup.py install
 
   python tortoise/do_tts.py --text "I'm going to speak this" --voice random --preset fast
+
+### RVC-CLI
+
+python rvc_cli.py infer \
+  --input_path /root/vdub/shared/task-public-nak-1/raw_video_audio_Vocals_16KHz.wav \
+  --output_path /root/vdub/shared/task-public-nak-1/generated_speech/0.wav \
+  --pth_path "/root/vdub/shared/alya.pth" \
+  --index_path "/root/vdub/shared/added_IVF777_Flat_nprobe_1_alya_v2.pth"
+
+python rvc_cli.py preprocess \
+  --model_name "nak_1" \
+  --dataset_path /root/vdub/shared/task-public-nak-1/rvc_cli_train_dataset \
+  --sample_rate 48000
+
+python rvc_cli.py extract \
+  --model_name "nak_1" \
+  --sample_rate 48000 \
+  --rvc_version v2 \
+  --gpu 0 --cpu_cores 1
+
+python rvc_cli.py train \
+  --model_name "nak_1" \
+  --rvc_version v2 \
+  --gpu 1 \
+  --sample_rate 48000 --total_epoch 500 --save_every_epoch 100
+
+python rvc_cli.py index \
+  --model_name "nak_1" \
+  --rvc_version v2
+

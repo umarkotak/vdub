@@ -16,6 +16,11 @@ type (
 		TranscriptData []TranscriptData `json:"transcript_data"`
 	}
 
+	TranscriptUpdatePosParams struct {
+		TaskName string `json:"-"`
+		Idx      int64  `json:"-"`
+	}
+
 	TranscriptData struct {
 		StartAt string `json:"start_at"`
 		EndAt   string `json:"end_at"`

@@ -34,3 +34,16 @@ func ServeSnapshot(w http.ResponseWriter, r *http.Request) {
 
 	http.ServeFile(w, r, mediaFile)
 }
+
+func ServeSubtitle(w http.ResponseWriter, r *http.Request) {
+	commonCtx := utils.GetCommonCtx(r)
+
+	taskName := utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name"))
+
+	mediaFile := fmt.Sprintf("%s/%s/%s", config.Get().BaseDir, taskName, "transcript.vtt")
+	if r.URL.Query().Get("sub_type") == "translated" {
+		mediaFile = fmt.Sprintf("%s/%s/%s", config.Get().BaseDir, taskName, "transcript_translated.vtt")
+	}
+
+	http.ServeFile(w, r, mediaFile)
+}

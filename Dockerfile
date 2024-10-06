@@ -130,6 +130,28 @@ ENV GOBIN=$GOPATH/bin
 
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
+# [TEMP DEV] RVC CLI
+
+# WORKDIR /root
+
+# RUN git clone https://github.com/blaisewf/rvc-cli.git
+
+# WORKDIR /root/rvc-cli
+
+# RUN chmod +x install.sh
+
+# RUN ./install.sh
+
+# RUN pip install tensorboard wget bs4 pydub transformers faiss-cpu noisereduce torchcrepe
+
+# RUN python rvc_cli.py -h
+
+# RUN wget https://huggingface.co/ORVC/Ov2Super/resolve/main/f0Ov2Super40kD.pth?download=true -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0Ov2Super40kD.pth
+
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O rvc/models/predictors/rmvpe.pt
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O rvc/models/pretraineds/pretrained_v2/f0G48k.pth
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O rvc/models/pretraineds/pretrained_v2/f0D48k.pth
+
 # RUN
 
 RUN mkdir -p /root/shared

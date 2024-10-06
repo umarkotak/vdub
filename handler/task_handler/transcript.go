@@ -44,11 +44,78 @@ func PatchTranscriptUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: remove log
 	// tmpTranscript, _ := json.MarshalIndent(params, " ", "  ")
 	// logrus.Infof("TRANSCRIPT DATA: %+v\n", string(tmpTranscript))
 
 	err = service.UpdateTranscript(ctx, params)
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 400, err)
+		return
+	}
+
+	utils.Render(
+		w, r, 200,
+		nil,
+		nil,
+	)
+}
+
+func PostTranscriptQuickShift(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	params := model.TranscriptUpdateParams{
+		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
+	}
+
+	err := service.QuickShiftTranscript(ctx, params)
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 400, err)
+		return
+	}
+
+	utils.Render(
+		w, r, 200,
+		nil,
+		nil,
+	)
+}
+
+func PostTranscriptDeleteByIdx(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	params := model.TranscriptUpdatePosParams{
+		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
+		Idx:      utils.StringMustInt64(chi.URLParam(r, "idx")),
+	}
+
+	err := service.DeleteTranscriptByIdx(ctx, params)
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 400, err)
+		return
+	}
+
+	utils.Render(
+		w, r, 200,
+		nil,
+		nil,
+	)
+}
+
+func PostTranscriptAddNexyByIdx(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	params := model.TranscriptUpdatePosParams{
+		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
+		Idx:      utils.StringMustInt64(chi.URLParam(r, "idx")),
+	}
+
+	err := service.AddTranscriptByIdx(ctx, params)
 	if err != nil {
 		logrus.WithContext(ctx).Error(err)
 		utils.RenderError(w, r, 400, err)
