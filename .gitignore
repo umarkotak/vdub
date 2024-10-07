@@ -1,3 +1,4 @@
 shared
 .env
 cookies.txt
+NOTES_IGNORE.md

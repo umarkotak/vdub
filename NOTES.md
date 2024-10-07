@@ -146,6 +146,11 @@ python rvc_cli.py index \
 
 python main.py --file_path /root/vdub/shared/task-public-nak-1/raw_video_audio_Vocals_16KHz.wav
 
+python main.py \
+  --file_path /root/vdub/shared/task-public-coba1/raw_video_audio_Vocals_16KHz.wav
+  --output_path /root/vdub/shared/task-public-coba1/diarization.vtt
+  --auth_token blablabla
+
 apt-get install kmod
 
 ARG nvidia_binary_version="550.120"
