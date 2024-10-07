@@ -144,3 +144,24 @@ python rvc_cli.py index \
   --model_name "nak_1" \
   --rvc_version v2
 
+python main.py --file_path /root/vdub/shared/task-public-nak-1/raw_video_audio_Vocals_16KHz.wav
+
+apt-get install kmod
+
+ARG nvidia_binary_version="550.120"
+ARG nvidia_binary="NVIDIA-Linux-x86_64-${nvidia_binary_version}.run"
+RUN wget https://us.download.nvidia.com/XFree86/Linux-x86_64/${nvidia_binary_version}/${nvidia_binary} &&
+chmod +x ${nvidia_binary} &&
+./${nvidia_binary} --accept-license --ui=none --no-kernel-module --no-questions &&
+rm -rf ${nvidia_binary}
+
+https://us.download.nvidia.com/XFree86/Linux-x86_64/550.120/NVIDIA-Linux-x86_64-550.120.run
+
+export CUDA_HOME=/usr/local/cuda-12.6/bin
+export PATH=$PATH:/usr/local/cuda-12.6/bin
+export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64
+export CUDA_VISIBLE_DEVICES=0
+
+sudo modprobe -r nvidia_uvm && sudo modprobe nvidia_uvm
+
+apt install linux-modules-nvidia-565.90-5.15.153.1-microsoft-standard-WSL2

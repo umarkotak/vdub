@@ -1,4 +1,5 @@
-FROM ubuntu:24.04
+# FROM ubuntu:24.04
+FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu24.04
 
 RUN apt-get update && apt-get install -y \
   wget \
@@ -36,7 +37,8 @@ RUN apt-get update && apt-get install -y \
   python3-wheel \
   espeak-ng \
   libsndfile1-dev \
-  yt-dlp
+  yt-dlp \
+  kmod
 
 WORKDIR /root
 
@@ -56,7 +58,11 @@ RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 
 RUN pyenv install 3.10.14
 
+# RUN pyenv install 3.12.7
+
 RUN pyenv global 3.10.14
+
+# RUN pyenv global 3.12.7
 
 RUN ln -s /root/.pyenv/shims/python /usr/bin/python
 
@@ -142,7 +148,7 @@ ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 # RUN ./install.sh
 
-# RUN pip install tensorboard wget bs4 pydub transformers faiss-cpu noisereduce torchcrepe
+RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard wget bs4 pydub transformers faiss-cpu noisereduce torchcrepe pyannote.audio"
 
 # RUN python rvc_cli.py -h
 
@@ -152,7 +158,7 @@ ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 # RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O rvc/models/pretraineds/pretrained_v2/f0G48k.pth
 # RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O rvc/models/pretraineds/pretrained_v2/f0D48k.pth
 
-# RUN
+# [TEMP DEV] Speaker diarization pyannote
 
 RUN mkdir -p /root/shared
 
@@ -161,6 +167,14 @@ RUN mkdir -p /root/vdub
 ENV PYTORCH_ENABLE_MPS_FALLBACK=1
 
 ENV PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
+
+ENV CUDA_HOME="/usr/local/cuda-12.6/bin"
+
+ENV PATH="$PATH:/usr/local/cuda-12.6/bin"
+
+ENV LD_LIBRARY_PATH="/usr/local/cuda-12.6/lib64"
+
+ENV CUDA_VISIBLE_DEVICES="0"
 
 WORKDIR /root/vdub
 
