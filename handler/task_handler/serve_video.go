@@ -45,5 +45,6 @@ func ServeSubtitle(w http.ResponseWriter, r *http.Request) {
 		mediaFile = fmt.Sprintf("%s/%s/%s", config.Get().BaseDir, taskName, "transcript_translated.vtt")
 	}
 
+	// logrus.Infof("MEDIA FILE: %s", mediaFile)
 	http.ServeFile(w, r, mediaFile)
 }

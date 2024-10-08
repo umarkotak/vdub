@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
@@ -12,59 +13,7 @@ import (
 	"github.com/umarkotak/vdub-go/utils"
 )
 
-type (
-	StartDubbTaskParams struct {
-		TaskName       string `json:"task_name" validate:"required"`   // must unique - it will determine the task folder
-		YoutubeUrl     string `json:"youtube_url" validate:"required"` //
-		VoiceName      string `json:"voice_name" validate:"required"`  // eg: id-ID-ArdiNeural
-		VoiceRate      string `json:"voice_rate" validate:"required"`  // eg: [-/+]10%
-		VoicePitch     string `json:"voice_pitch" validate:"required"` // eg: [-/+]10Hz
-		ForceStartFrom string `json:"force_start_from"`                // used to run from certain state
-
-		TaskDir                  string
-		RawVideoName             string
-		RawVideoPath             string
-		RawVideoAudioName        string
-		VideoScreenshotPath      string
-		RawVideoAudioPath        string
-		AudioInstrumentPath      string
-		AudioVocalPath           string
-		Vocal16KHzName           string
-		Vocal16KHzPath           string
-		InstrumentVideoPath      string
-		TranscriptPath           string
-		TranscriptVttPath        string
-		TranscriptTranslatedPath string
-		GeneratedSpeechDir       string
-		SegmentedSpeechDir       string
-		SpeechAdjustedDir        string
-		DubbedVideoPath          string
-	}
-)
-
-func (p *StartDubbTaskParams) Gen(username string) {
-	p.TaskName = utils.GenTaskName(username, p.TaskName)
-	p.TaskDir = utils.GenTaskDir(p.TaskName)
-	p.VideoScreenshotPath = utils.GenVideoScreenshotPath(p.TaskDir)
-	p.RawVideoName = "raw_video.mp4"
-	p.RawVideoPath = utils.GenRawVideoPath(p.TaskDir, p.RawVideoName)
-	p.RawVideoAudioName = "raw_video_audio.wav"
-	p.RawVideoAudioPath = utils.GenRawVideoAudioPath(p.TaskDir, p.RawVideoAudioName)
-	p.AudioInstrumentPath = utils.GenAudioInstrumentPath(p.RawVideoAudioPath)
-	p.AudioVocalPath = utils.GenAudioVocalPath(p.RawVideoAudioPath)
-	p.Vocal16KHzName = "raw_video_audio_Vocals_16KHz.wav"
-	p.Vocal16KHzPath = utils.GenVocal16KHzPath(p.TaskDir, p.Vocal16KHzName)
-	p.InstrumentVideoPath = utils.GenInstrumentVideoPath(p.TaskDir)
-	p.TranscriptPath = utils.GenTranscriptPath(p.TaskDir)
-	p.TranscriptVttPath = utils.GenTranscriptVttPath(p.TaskDir)
-	p.TranscriptTranslatedPath = utils.GenTranscriptTranslatedPath(p.TaskDir)
-	p.GeneratedSpeechDir = utils.GenGeneratedSpeechDir(p.TaskDir)
-	p.SegmentedSpeechDir = utils.GenSegmentedSpeechDir(p.TaskDir)
-	p.SpeechAdjustedDir = utils.GenSpeechAdjustedDir(p.TaskDir)
-	p.DubbedVideoPath = utils.GenDubbedVideoPath(p.TaskDir)
-}
-
-func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
+func PostStartDubbTaskV2(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	commonCtx := utils.GetCommonCtx(r)
 
@@ -221,8 +170,16 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if state.Status == model.STATE_VIDEO_WITH_INSTRUMENT_GENERATED {
-			logrus.Infof("DUBBING TASK RUNNING: %s; (6/10) %s", params.TaskName, "transcript audio")
-			err = service.TranscriptAudio(bgCtx, params.Vocal16KHzPath, params.TranscriptPath)
+			logrus.Infof("DUBBING TASK RUNNING: %s; (6/10) %s", params.TaskName, "transcript audio with diarization")
+
+			logrus.Infof("DUBBING TASK RUNNING: %s; (6/10) %s", params.TaskName, fmt.Sprintf("diarization started: %s", time.Now().Format(time.RFC3339)))
+			err = service.DiarizeVoice(bgCtx, params.TaskDir)
+			if err != nil {
+				logrus.WithContext(bgCtx).Error(err)
+			}
+			logrus.Infof("DUBBING TASK RUNNING: %s; (6/10) %s", params.TaskName, fmt.Sprintf("diarization finished: %s", time.Now().Format(time.RFC3339)))
+
+			err = service.TranscriptAudioWithDiarization(bgCtx, params.TaskDir, params.Vocal16KHzPath, params.TranscriptPath, params.SegmentedSpeechDir)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return

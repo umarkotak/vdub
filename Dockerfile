@@ -100,11 +100,17 @@ WORKDIR /root/whisper.cpp
 
 RUN make
 
-RUN make medium.en
+# RUN make medium.en
+
+# RUN make quantize
+
+# RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
+
+RUN make large-v3-turbo
 
 RUN make quantize
 
-RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
+RUN ./quantize models/ggml-large-v3-turbo.bin models/ggml-large-v3-turbo-q5_0.bin q5_0
 
 ## Install [Golang] - GO programming language
 

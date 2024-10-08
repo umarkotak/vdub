@@ -38,6 +38,7 @@ func main() {
 	r.Get("/", handler.Ping)
 
 	r.Post("/vdub/api/dubb/start", task_handler.PostStartDubbTask)
+	r.Post("/vdub/api/dubb/startv2", task_handler.PostStartDubbTaskV2)
 	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
 	r.Get("/vdub/api/dubb/tasks", task_handler.GetTaskList)
 	r.Get("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)

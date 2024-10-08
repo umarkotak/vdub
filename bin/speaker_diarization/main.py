@@ -1,4 +1,5 @@
 from pyannote.audio import Pipeline
+# from pyannote.audio.pipelines.utils.hook import Hook, ProgressHook, TimingHook
 import torch
 import argparse
 
@@ -14,6 +15,9 @@ def diarize_audio_to_vtt(file_path, output_path="diarization.vtt", auth_token="y
 
     # Apply the pipeline to the audio file
     diarization = pipeline(file_path)
+
+    # with Hook(ProgressHook(), TimingHook()) as hook:
+    #   diarization = pipeline(file_path, hook=hook)
 
     # Generate VTT content
     vtt_content = "WEBVTT\n\n"

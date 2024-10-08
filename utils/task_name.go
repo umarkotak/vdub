@@ -66,6 +66,10 @@ func GenGeneratedSpeechDir(taskDir string) string {
 	return fmt.Sprintf("%s/generated_speech", taskDir)
 }
 
+func GenSegmentedSpeechDir(taskDir string) string {
+	return fmt.Sprintf("%s/segmented_speech", taskDir)
+}
+
 func GenSpeechAdjustedDir(taskDir string) string {
 	return fmt.Sprintf("%s/adjusted_speech", taskDir)
 }
