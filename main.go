@@ -45,9 +45,9 @@ func main() {
 	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.UpdateTaskStatus)
 	r.Patch("/vdub/api/dubb/task/{task_name}/transcript", task_handler.PatchTranscriptUpdate)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/quick_shift", task_handler.PostTranscriptQuickShift)
+	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/delete", task_handler.PostTranscriptDeleteByIdx)
+	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/add_next", task_handler.PostTranscriptAddNexyByIdx)
 	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", task_handler.GetTranscript)
-	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{idx}/delete", task_handler.PostTranscriptDeleteByIdx)
-	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{idx}/add_next", task_handler.PostTranscriptAddNexyByIdx)
 
 	r.Get("/vdub/api/dubb/task/{task_name}/video/snapshot", task_handler.ServeSnapshot)
 	r.Get("/vdub/api/dubb/task/{task_name}/video/subtitle", task_handler.ServeSubtitle)
