@@ -8,8 +8,8 @@ def diarize_audio_to_vtt(file_path, output_path="diarization.vtt", auth_token="y
     pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=auth_token)
 
     # Send to GPU if available
-    if torch.cuda.is_available():
-        pipeline.to(torch.device("cuda"))
+    # if torch.cuda.is_available():
+    #     pipeline.to(torch.device("cuda"))
 
     # pipeline.to(torch.device("cuda"))
 
