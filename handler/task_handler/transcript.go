@@ -69,7 +69,7 @@ func PostTranscriptQuickShift(w http.ResponseWriter, r *http.Request) {
 		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
 	}
 
-	err := service.QuickShiftTranscript(ctx, params)
+	err := service.QuickShiftTranscriptV2(ctx, params)
 	if err != nil {
 		logrus.WithContext(ctx).Error(err)
 		utils.RenderError(w, r, 400, err)

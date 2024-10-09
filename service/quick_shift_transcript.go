@@ -59,3 +59,29 @@ func QuickShiftTranscript(ctx context.Context, params model.TranscriptUpdatePara
 
 	return nil
 }
+
+func QuickShiftTranscriptV2(ctx context.Context, params model.TranscriptUpdateParams) error {
+	taskDir := utils.GenTaskDir(params.TaskName)
+
+	subObj, err := astisub.OpenFile(utils.GenTranscriptTranslatedPath(taskDir))
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		return err
+	}
+
+	for idx, subItem := range subObj.Items {
+		if idx >= len(subObj.Items)-1 {
+			break
+		}
+
+		nextSubItem := subObj.Items[idx+1]
+
+		subItem.EndAt = nextSubItem.StartAt
+
+		subObj.Items[idx] = subItem
+	}
+
+	subObj.Write(utils.GenTranscriptTranslatedPath(taskDir))
+
+	return nil
+}
