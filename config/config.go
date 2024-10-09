@@ -31,7 +31,7 @@ func InitConfig() {
 		VocalRemoverPy:              GetStringWithDefault("VOCAL_REMOVER_PY", "/root/vocal-remover/inference.py"),
 		VocalRemoverModelPath:       GetStringWithDefault("VOCAL_REMOVER_MODEL_PATH", "/root/vocal-remover/baseline.pth"),
 		WhisperBinary:               GetStringWithDefault("WHISPER_BINARY", "/root/whisper.cpp/main"),
-		WhisperModelPath:            GetStringWithDefault("WHISPER_MODEL_PATH", "/root/whisper.cpp/models/ggml-medium.en-q5_0.bin"),
+		WhisperModelPath:            GetStringWithDefault("WHISPER_MODEL_PATH", "/root/whisper.cpp/models/ggml-large-v3-turbo-q5_0.bin"),
 		PythonDiarizationPath:       GetStringWithDefault("PYTHON_DIARIZATION_PATH", "/root/vdub/bin/speaker_diarization/main.py"),
 		GoogleAiStudioKey:           os.Getenv("GOOGLE_AI_STUDIO_KEY"),
 		HuggingFaceDiarizationToken: os.Getenv("HUGGING_FACE_DIARIZATION_TOKEN"),

@@ -70,8 +70,7 @@ func TranscriptAudioWithDiarization(ctx context.Context, taskDir, audioPath, tra
 		return err
 	}
 
-	bar := progressbar.Default(int64(len(diarizationVtt.Items)), "Translating")
-
+	segmentBar := progressbar.Default(int64(len(diarizationVtt.Items)), "Translating")
 	for idx, subItem := range diarizationVtt.Items {
 		cmd = exec.Command(
 			"ffmpeg", "-y",
@@ -92,6 +91,11 @@ func TranscriptAudioWithDiarization(ctx context.Context, taskDir, audioPath, tra
 			return err
 		}
 
+		segmentBar.Add(1)
+	}
+
+	segmentWhisperBar := progressbar.Default(int64(len(diarizationVtt.Items)), "Translating")
+	for idx, subItem := range diarizationVtt.Items {
 		segmentedVoicePath := fmt.Sprintf("%s/segmented_speech/%v.wav", taskDir, idx)
 		cmd = exec.Command(
 			config.Get().WhisperBinary,
@@ -101,7 +105,9 @@ func TranscriptAudioWithDiarization(ctx context.Context, taskDir, audioPath, tra
 		)
 		_, err = cmd.Output()
 		if err != nil {
-			logrus.WithContext(ctx).Error(err)
+			logrus.WithContext(ctx).WithFields(logrus.Fields{
+				"cmd": cmd.String(),
+			}).Error(err)
 			return err
 		}
 
@@ -111,7 +117,7 @@ func TranscriptAudioWithDiarization(ctx context.Context, taskDir, audioPath, tra
 		}
 		subItem.Lines[0].Items[0].Text = textContent
 
-		bar.Add(1)
+		segmentWhisperBar.Add(1)
 	}
 
 	diarizationVtt.Write(utils.GenTranscriptVttPath(taskDir))

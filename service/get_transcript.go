@@ -32,7 +32,7 @@ func GetTranscript(ctx context.Context, taskName, transcriptType string) (Transc
 
 	transcriptSubtitle, err := astisub.OpenFile(transcriptPath)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") {
+		if !strings.Contains(err.Error(), "no such file or directory") {
 			logrus.WithContext(ctx).Error(err)
 		}
 		return TranscriptInfo{}, nil
