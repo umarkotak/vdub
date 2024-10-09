@@ -35,6 +35,7 @@ type (
 		IsRunning          bool                `json:"is_running"`
 		ProgressSummary    string              `json:"progress_summary"`
 		Progresses         []TaskStateProgress `json:"progresses"`
+		Completed          bool                `json:"completed"`
 	}
 )
 
@@ -64,5 +65,6 @@ func (ts *TaskState) GetTaskStateData(isRunning bool) GetTaskStateData {
 		IsRunning:          isRunning,
 		ProgressSummary:    fmt.Sprintf("%v/%v", currStateIdx, 10),
 		Progresses:         progresses,
+		Completed:          currStateIdx == (len(STATE_IDX_ARR) - 1),
 	}
 }
