@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/asticode/go-astisub"
 	"github.com/sirupsen/logrus"
@@ -31,7 +32,9 @@ func GetTranscript(ctx context.Context, taskName, transcriptType string) (Transc
 
 	transcriptSubtitle, err := astisub.OpenFile(transcriptPath)
 	if err != nil {
-		logrus.WithContext(ctx).Error(err)
+		if strings.Contains(err.Error(), "no such file or directory") {
+			logrus.WithContext(ctx).Error(err)
+		}
 		return TranscriptInfo{}, nil
 	}
 
