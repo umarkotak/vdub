@@ -15,6 +15,7 @@ import (
 type (
 	StartDubbTaskParams struct {
 		TaskName       string `json:"task_name" validate:"required"`   // must unique - it will determine the task folder
+		TaskType       string `json:"task_type"`                       // Enum: dubbing, transcripting
 		YoutubeUrl     string `json:"youtube_url" validate:"required"` //
 		VoiceName      string `json:"voice_name" validate:"required"`  // eg: id-ID-ArdiNeural
 		VoiceRate      string `json:"voice_rate" validate:"required"`  // eg: [-/+]10%

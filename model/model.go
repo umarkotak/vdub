@@ -17,6 +17,7 @@ type (
 		Transcripts   []Transcript `json:"transcripts"`    //
 		RawTranscript string       `json:"raw_transcript"` //
 
+		TaskType   string `json:"task_type"`
 		YoutubeUrl string `json:"youtube_url" validate:"required"` //
 		VoiceName  string `json:"voice_name" validate:"required"`  // eg: id-ID-ArdiNeural
 		VoiceRate  string `json:"voice_rate" validate:"required"`  // eg: [-/+]10%

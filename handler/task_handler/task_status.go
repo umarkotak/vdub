@@ -21,7 +21,7 @@ func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
 	state, err := service.GetState(ctx, taskDir, model.TaskState{})
 	if err != nil {
-		logrus.WithContext(r.Context()).Error(err)
+		logrus.WithContext(ctx).Error(err)
 		utils.RenderError(w, r, 422, err)
 		return
 	}
@@ -33,6 +33,27 @@ func GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 			"state_human": state.GetTaskStateData(handlerState.RunningTask[taskName]),
 		},
 		nil,
+	)
+}
+
+func GetTaskLog(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	taskName := utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name"))
+
+	taskDir := fmt.Sprintf("%s/%s", config.Get().BaseDir, taskName)
+
+	taskLog, err := utils.QuickGetLog(taskDir)
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 422, err)
+		return
+	}
+
+	utils.Render(w, r, 200, map[string]any{
+		"logs": taskLog,
+	}, nil,
 	)
 }
 

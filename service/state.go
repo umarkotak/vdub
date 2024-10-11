@@ -11,6 +11,7 @@ import (
 	"github.com/umarkotak/vdub-go/model"
 )
 
+// Get or initialize state if not exists
 func GetState(ctx context.Context, taskDir string, initialState model.TaskState) (model.TaskState, error) {
 	statePath := genStatePath(taskDir)
 
@@ -33,10 +34,6 @@ func GetState(ctx context.Context, taskDir string, initialState model.TaskState)
 	SaveState(ctx, taskDir, initialState)
 
 	return initialState, nil
-}
-
-func InitState(ctx context.Context, state model.TaskState) {
-
 }
 
 func SaveState(ctx context.Context, taskDir string, state model.TaskState) error {

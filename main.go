@@ -11,10 +11,13 @@ import (
 	"github.com/umarkotak/vdub-go/handler"
 	"github.com/umarkotak/vdub-go/handler/task_handler"
 	"github.com/umarkotak/vdub-go/middleware"
+	"github.com/umarkotak/vdub-go/utils"
 )
 
 func initialize() {
 	logrus.SetReportCaller(true)
+	logrus.SetFormatter(&utils.Formatter{})
+	logrus.AddHook(&utils.CustomLogrusHook{})
 	config.InitConfig()
 	datastore.InitDataStore()
 }
@@ -38,10 +41,11 @@ func main() {
 	r.Get("/", handler.Ping)
 
 	r.Post("/vdub/api/dubb/start", task_handler.PostStartDubbTask)
-	r.Post("/vdub/api/dubb/startv2", task_handler.PostStartDubbTaskV2)
+	r.Post("/vdub/api/dubb/startv2", task_handler.PostStartTask)
 	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
 	r.Get("/vdub/api/dubb/tasks", task_handler.GetTaskList)
 	r.Get("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)
+	r.Get("/vdub/api/dubb/task/{task_name}/log", task_handler.GetTaskLog)
 	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.UpdateTaskStatus)
 	r.Patch("/vdub/api/dubb/task/{task_name}/transcript", task_handler.PatchTranscriptUpdate)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/quick_shift", task_handler.PostTranscriptQuickShift)
