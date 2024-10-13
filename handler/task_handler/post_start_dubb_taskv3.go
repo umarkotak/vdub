@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/sirupsen/logrus"
 	"github.com/umarkotak/vdub-go/model"
@@ -36,6 +37,16 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 		logrus.WithContext(r.Context()).Error(err)
 		utils.RenderError(w, r, 422, err)
 		return
+	}
+
+	if params.ForceStartFrom != "" {
+		state.Status = params.ForceStartFrom
+
+		err = service.SaveStateStatus(ctx, params.TaskDir, &state, params.ForceStartFrom)
+		if err != nil {
+			logrus.WithContext(ctx).Error(err)
+			return
+		}
 	}
 
 	if handlerState.RunningTask[params.TaskName] {
@@ -245,4 +256,45 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	utils.Render(w, r, 200, state, nil)
+}
+
+func PatchUpdateTaskSetting(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	params := StartDubbTaskParams{}
+	err := utils.BindJson(r, &params)
+	if err != nil {
+		logrus.WithContext(r.Context()).Error(err)
+		utils.RenderError(w, r, 400, err)
+		return
+	}
+	params.TaskName = chi.URLParam(r, "task_name")
+	params.Gen(commonCtx.DirectUsername)
+
+	state, err := service.GetState(ctx, params.TaskDir, model.TaskState{
+		YoutubeUrl: params.YoutubeUrl,
+		VoiceName:  params.VoiceName,
+		VoiceRate:  params.VoiceRate,
+		VoicePitch: params.VoicePitch,
+	})
+	if err != nil {
+		logrus.WithContext(r.Context()).Error(err)
+		utils.RenderError(w, r, 422, err)
+		return
+	}
+
+	state.YoutubeUrl = params.YoutubeUrl
+	state.VoiceName = params.VoiceName
+	state.VoiceRate = params.VoiceRate
+	state.VoicePitch = params.VoicePitch
+
+	err = service.SaveState(ctx, params.TaskDir, state)
+	if err != nil {
+		logrus.WithContext(r.Context()).Error(err)
+		utils.RenderError(w, r, 422, err)
+		return
+	}
+
+	utils.Render(w, r, 200, nil, nil)
 }

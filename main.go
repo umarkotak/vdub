@@ -40,19 +40,25 @@ func main() {
 
 	r.Get("/", handler.Ping)
 
+	r.Get("/vdub/api/dubb/tasks", task_handler.GetTaskList)
 	r.Post("/vdub/api/dubb/start", task_handler.PostStartDubbTask)
 	r.Post("/vdub/api/dubb/startv2", task_handler.PostStartTask)
-	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
-	r.Get("/vdub/api/dubb/tasks", task_handler.GetTaskList)
+
+	// Task related API
 	r.Get("/vdub/api/dubb/task/{task_name}/status", task_handler.GetTaskStatus)
 	r.Get("/vdub/api/dubb/task/{task_name}/log", task_handler.GetTaskLog)
+	r.Patch("/vdub/api/dubb/task/{task_name}/setting", task_handler.PatchUpdateTaskSetting)
 	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.UpdateTaskStatus)
-	r.Patch("/vdub/api/dubb/task/{task_name}/transcript", task_handler.PatchTranscriptUpdate)
+	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
+
+	// Transcript related API
+	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", task_handler.GetTranscript)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/quick_shift", task_handler.PostTranscriptQuickShift)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/delete", task_handler.PostTranscriptDeleteByIdx)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/add_next", task_handler.PostTranscriptAddNexyByIdx)
-	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", task_handler.GetTranscript)
+	r.Patch("/vdub/api/dubb/task/{task_name}/transcript", task_handler.PatchTranscriptUpdate)
 
+	// Resource related API
 	r.Get("/vdub/api/dubb/task/{task_name}/video/snapshot", task_handler.ServeSnapshot)
 	r.Get("/vdub/api/dubb/task/{task_name}/video/subtitle", task_handler.ServeSubtitle)
 	r.Get("/vdub/api/dubb/task/{task_name}/video/{video_type}", task_handler.ServeVideo)

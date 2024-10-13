@@ -123,6 +123,12 @@ python rvc_cli.py infer \
   --pth_path "/root/vdub/shared/alya.pth" \
   --index_path "/root/vdub/shared/added_IVF777_Flat_nprobe_1_alya_v2.index"
 
+python rvc_cli.py infer \
+  --input_path /root/vdub/shared/task-public-nak-1/generated_speech/0.wav \
+  --output_path /root/vdub/shared/task-public-nak-1/generated_speech/0-alya.wav \
+  --pth_path "/root/vdub/shared/alya.pth" \
+  --index_path "/root/vdub/shared/added_IVF777_Flat_nprobe_1_alya_v2.index"
+
 python rvc_cli.py preprocess \
   --model_name "nak_1" \
   --dataset_path /root/vdub/shared/task-public-nak-1/rvc_cli_train_dataset \
