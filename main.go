@@ -56,6 +56,8 @@ func main() {
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/quick_shift", task_handler.PostTranscriptQuickShift)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/delete", task_handler.PostTranscriptDeleteByIdx)
 	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/add_next", task_handler.PostTranscriptAddNexyByIdx)
+	r.Post("/vdub/api/dubb/task/{task_name}/transcript/{idx}/gen_preview_voice", task_handler.PostGenPreviewVoice)
+	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{idx}/preview_voice", task_handler.GetPreviewVoice)
 	r.Patch("/vdub/api/dubb/task/{task_name}/transcript", task_handler.PatchTranscriptUpdate)
 
 	// Resource related API

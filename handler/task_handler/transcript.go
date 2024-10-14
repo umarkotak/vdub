@@ -128,3 +128,41 @@ func PostTranscriptAddNexyByIdx(w http.ResponseWriter, r *http.Request) {
 		nil,
 	)
 }
+
+func PostGenPreviewVoice(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	params := model.TranscriptUpdatePosParams{
+		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
+		Idx:      utils.StringMustInt64(chi.URLParam(r, "idx")),
+	}
+
+	_, err := service.GenPreviewTranscriptVoice(ctx, params)
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 400, err)
+		return
+	}
+
+	utils.Render(w, r, 200, nil, nil)
+}
+
+func GetPreviewVoice(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	commonCtx := utils.GetCommonCtx(r)
+
+	params := model.TranscriptUpdatePosParams{
+		TaskName: utils.GenTaskName(commonCtx.DirectUsername, chi.URLParam(r, "task_name")),
+		Idx:      utils.StringMustInt64(chi.URLParam(r, "idx")),
+	}
+
+	previewPath, err := service.GetPreviewTranscriptVoice(ctx, params)
+	if err != nil {
+		logrus.WithContext(ctx).Error(err)
+		utils.RenderError(w, r, 400, err)
+		return
+	}
+
+	http.ServeFile(w, r, previewPath)
+}
