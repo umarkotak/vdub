@@ -57,9 +57,14 @@ func QuickGetLog(taskDir string) ([]LogEntry, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		if line == "" {
+			continue
+		}
+
 		parts := strings.SplitN(line, " | ", 3) // Split into at most 3 parts
 
-		if len(parts) != 3 {
+		if len(parts) < 3 {
 			return nil, fmt.Errorf("invalid log format: %s", line)
 		}
 

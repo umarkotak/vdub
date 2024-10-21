@@ -90,7 +90,7 @@ func PostStartDubbTaskV2(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_INITIALIZED {
 			logrus.Infof("DUBBING TASK RUNNING: %s; (1/10) %s", params.TaskName, "download youtube video")
-			err = service.DownloadYoutubeVideo(bgCtx, state.YoutubeUrl, params.RawVideoPath)
+			err = service.DownloadYoutubeVideo(bgCtx, state.YoutubeUrl, params.RawVideoPath, params.TaskDir)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
