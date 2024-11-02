@@ -72,7 +72,11 @@ RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
 
 ## Install [Yt DLP] - Youtube video downloader
 
-RUN bash -i -c "source ~/.bashrc && python -m pip install yt-dlp llvmlite torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu118"
+# CUDA 11.8
+# RUN bash -i -c "source ~/.bashrc && python -m pip install yt-dlp llvmlite torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu118"
+
+# CUDA 12.1
+RUN bash -i -c "source ~/.bashrc && python -m pip install yt-dlp llvmlite torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu121"
 
 ## Install [Edge TTS] - Text to speech
 
@@ -142,6 +146,25 @@ ENV GOBIN=$GOPATH/bin
 
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
+RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard"
+RUN bash -i -c "source ~/.bashrc && python -m pip install wget"
+RUN bash -i -c "source ~/.bashrc && python -m pip install bs4"
+RUN bash -i -c "source ~/.bashrc && python -m pip install pydub"
+RUN bash -i -c "source ~/.bashrc && python -m pip install transformers"
+RUN bash -i -c "source ~/.bashrc && python -m pip install noisereduce"
+RUN bash -i -c "source ~/.bashrc && python -m pip install torchcrepe"
+RUN bash -i -c "source ~/.bashrc && python -m pip install pedalboard"
+RUN bash -i -c "source ~/.bashrc && python -m pip install pyannote.audio"
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install audio-separator"
+RUN bash -i -c "source ~/.bashrc && python -m pip install onnxruntime"
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install audio_upscaler"
+# RUN bash -i -c "source ~/.bashrc && python -m pip install faiss"
+RUN bash -i -c "source ~/.bashrc && python -m pip install faiss-cpu faiss-gpu-cu12"
+
+# RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard wget bs4 pydub transformers faiss-cpu noisereduce torchcrepe pedalboard audio_upscaler pyannote.audio"
+
 # [TEMP DEV] RVC CLI
 
 # WORKDIR /root
@@ -154,21 +177,27 @@ ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 # RUN ./install.sh
 
-RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard wget bs4 pydub transformers faiss-cpu noisereduce torchcrepe pyannote.audio"
-
 # RUN python rvc_cli.py -h
 
 # RUN wget https://huggingface.co/ORVC/Ov2Super/resolve/main/f0Ov2Super40kD.pth?download=true -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0Ov2Super40kD.pth
 
+# Debug setup
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O /root/rvc-cli/rvc/models/predictors/rmvpe.pt
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0G48k.pth
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0D48k.pth
+
+# Final setup
 # RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O rvc/models/predictors/rmvpe.pt
 # RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O rvc/models/pretraineds/pretrained_v2/f0G48k.pth
 # RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O rvc/models/pretraineds/pretrained_v2/f0D48k.pth
 
-# [TEMP DEV] Speaker diarization pyannote
+WORKDIR /root
 
 RUN mkdir -p /root/shared
 
 RUN mkdir -p /root/vdub
+
+# RUN ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.560.35.03 /usr/lib/x86_64-linux-gnu/libcuda.so.1
 
 ENV PYTORCH_ENABLE_MPS_FALLBACK=1
 

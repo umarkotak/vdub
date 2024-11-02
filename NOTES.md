@@ -176,3 +176,19 @@ export CUDA_VISIBLE_DEVICES=0
 sudo modprobe -r nvidia_uvm && sudo modprobe nvidia_uvm
 
 apt install linux-modules-nvidia-565.90-5.15.153.1-microsoft-standard-WSL2
+
+/usr/bin/python /root/vocal-remover/inference.py \
+  --input /root/shared/task-public-kurz-1/raw_video_audio.wav \
+  -P /root/vocal-remover/baseline.pth \
+  -o /root/shared/task-public-kurz-1
+
+audio-separator \
+  --output_dir /root/shared/task-public-kurz-1 \
+  /root/shared/task-public-kurz-1/raw_video_audio.wav
+
+audio-separator \
+  --model_file_dir /root/vocal-remover \
+  --model_filename baseline.pth \
+  --output_dir /root/shared/task-public-kurz-1 \
+  --output_format wav \
+  /root/shared/task-public-kurz-1/raw_video_audio.wav

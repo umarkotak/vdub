@@ -31,10 +31,12 @@ func GenRawVideoAudioPath(taskDir, rawVideoAudioName string) string {
 }
 
 func GenAudioInstrumentPath(rawVideoAudioPath string) string {
+	// return fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 	return fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 }
 
 func GenAudioVocalPath(rawVideoAudioPath string) string {
+	// return fmt.Sprintf("%s_Vocals.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 	return fmt.Sprintf("%s_Vocals.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
 }
 

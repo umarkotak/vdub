@@ -2,3 +2,5 @@ shared
 .env
 cookies.txt
 NOTES_IGNORE.md
+bin/rvc
+bin/tts
