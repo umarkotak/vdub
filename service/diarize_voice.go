@@ -8,12 +8,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/umarkotak/vdub-go/config"
+	"github.com/umarkotak/vdub-go/utils"
 )
 
 func DiarizeVoice(ctx context.Context, taskDir string) error {
 	cmd := exec.Command(
 		"python", config.Get().PythonDiarizationPath,
-		"--file_path", fmt.Sprintf("%s/raw_video_audio_Vocals_16KHz.wav", taskDir),
+		"--file_path", utils.GenVocal16KHzPath(taskDir),
 		"--output_path", fmt.Sprintf("%s/diarization.vtt", taskDir),
 		"--auth_token", config.Get().HuggingFaceDiarizationToken,
 	)

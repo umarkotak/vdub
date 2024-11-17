@@ -5,16 +5,17 @@ import (
 	"os/exec"
 
 	"github.com/sirupsen/logrus"
-	"github.com/umarkotak/vdub-go/config"
 	"github.com/umarkotak/vdub-go/utils"
 )
 
+// Separate vocal and audio
 func SeparateVocal(ctx context.Context, rawAudioPath, targetDir string) error {
 	cmd := exec.Command(
-		"python", config.Get().VocalRemoverPy,
-		"--input", rawAudioPath,
-		"-P", config.Get().VocalRemoverModelPath,
-		"-o", targetDir,
+		"audio-separator",
+		"--model_filename", "UVR-MDX-NET-Voc_FT.onnx",
+		"--output_format", "wav",
+		"--output_dir", targetDir,
+		rawAudioPath,
 	)
 
 	stderr, _ := cmd.StderrPipe()

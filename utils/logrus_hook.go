@@ -24,7 +24,7 @@ func (hook *CustomLogrusHook) Fire(entry *logrus.Entry) error {
 		return nil
 	}
 
-	QuickStoreLog(taskDir, strings.ToUpper(entry.Level.String()), entry.Message)
+	QuickStoreLog(taskDir, strings.ToUpper(entry.Level.String()), fmt.Sprintf("%s: %+v", entry.Message, entry.Data))
 
 	return nil
 }

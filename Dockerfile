@@ -1,5 +1,5 @@
 # FROM ubuntu:24.04
-FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu24.04
+FROM nvidia/cuda:12.6.2-cudnn-devel-ubuntu24.04
 
 RUN apt-get update && apt-get install -y \
   wget \
@@ -44,52 +44,6 @@ WORKDIR /root
 
 SHELL ["/bin/bash", "-c"]
 
-## Install [pyenv] - Python env management
-
-RUN curl https://pyenv.run | bash
-
-ENV PYENV_ROOT="/root/.pyenv"
-
-ENV PATH="$PYENV_ROOT/bin:$PATH"
-
-RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
-
-RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
-
-RUN pyenv install 3.10.14
-
-# RUN pyenv install 3.12.7
-
-RUN pyenv global 3.10.14
-
-# RUN pyenv global 3.12.7
-
-RUN ln -s /root/.pyenv/shims/python /usr/bin/python
-
-RUN mv /usr/bin/python3 /usr/bin/python3.original
-
-RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
-
-## Install [Yt DLP] - Youtube video downloader
-
-RUN bash -i -c "source ~/.bashrc && python -m pip install yt-dlp llvmlite torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu118"
-
-## Install [Edge TTS] - Text to speech
-
-RUN bash -i -c "source ~/.bashrc && python -m pip install edge-tts"
-
-## Install [Vocal remover] - Separate audio file into Instruments and Vocals
-
-WORKDIR /root
-
-RUN git clone https://github.com/tsurumeso/vocal-remover.git
-
-WORKDIR /root/vocal-remover
-
-RUN bash -i -c "source ~/.bashrc && python -m pip install -r requirements.txt"
-
-RUN curl -OL https://huggingface.co/fabiogra/baseline_vocal_remover/resolve/main/baseline.pth?download=true
-
 ## Install [Whisper] - Speech to text for transcripting
 
 WORKDIR /root
@@ -99,12 +53,6 @@ RUN git clone https://github.com/ggerganov/whisper.cpp.git
 WORKDIR /root/whisper.cpp
 
 RUN make
-
-# RUN make medium.en
-
-# RUN make quantize
-
-# RUN ./quantize models/ggml-medium.en.bin models/ggml-medium.en-q5_0.bin q5_0
 
 RUN make large-v3-turbo
 
@@ -118,21 +66,21 @@ WORKDIR /root
 
 RUN mkdir -p go/bin
 
-RUN curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz
+RUN curl -OL https://go.dev/dl/go1.23.3.linux-arm64.tar.gz
 
-RUN curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
+RUN curl -OL https://go.dev/dl/go1.23.3.linux-amd64.tar.gz
 
 ARG ARCH
 
 RUN if [ "$ARCH" == "arm64" ]; then \
-    tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz; \
+    tar -C /usr/local -xvf go1.23.3.linux-arm64.tar.gz; \
   else \
-    tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz; \
+    tar -C /usr/local -xvf go1.23.3.linux-amd64.tar.gz; \
   fi
 
-RUN rm -rf go1.22.2.linux-arm64.tar.gz
+RUN rm -rf go1.23.3.linux-arm64.tar.gz
 
-RUN rm -rf go1.22.2.linux-amd64.tar.gz
+RUN rm -rf go1.23.3.linux-amd64.tar.gz
 
 ENV GOROOT=/usr/local/go
 
@@ -142,7 +90,70 @@ ENV GOBIN=$GOPATH/bin
 
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-# [TEMP DEV] RVC CLI
+## Install [pyenv] - Python env management
+
+RUN curl https://pyenv.run | bash
+
+ENV PYENV_ROOT="/root/.pyenv"
+
+ENV PATH="$PYENV_ROOT/bin:$PATH"
+
+ENV PATH="$PYENV_ROOT/shims:$PATH"
+
+RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
+
+RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
+
+RUN pyenv install 3.10.15
+
+RUN pyenv global 3.10.15
+
+RUN ln -s /root/.pyenv/shims/python /usr/bin/python
+
+RUN mv /usr/bin/python3 /usr/bin/python3.original
+
+RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
+
+## Install [Python dependencies]
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install wget"
+RUN bash -i -c "source ~/.bashrc && python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124"
+RUN bash -i -c "source ~/.bashrc && python -m pip install llvmlite"
+RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard"
+RUN bash -i -c "source ~/.bashrc && python -m pip install bs4"
+RUN bash -i -c "source ~/.bashrc && python -m pip install pydub"
+RUN bash -i -c "source ~/.bashrc && python -m pip install transformers"
+RUN bash -i -c "source ~/.bashrc && python -m pip install noisereduce"
+RUN bash -i -c "source ~/.bashrc && python -m pip install torchcrepe"
+RUN bash -i -c "source ~/.bashrc && python -m pip install pedalboard"
+RUN bash -i -c "source ~/.bashrc && python -m pip install onnxruntime"
+RUN bash -i -c "source ~/.bashrc && python -m pip install audio_upscaler"
+# RUN bash -i -c "source ~/.bashrc && python -m pip install faiss"
+RUN bash -i -c "source ~/.bashrc && python -m pip install faiss-cpu faiss-gpu-cu12"
+
+## Install [Yt DLP] - Youtube video downloader
+
+WORKDIR /root
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install yt-dlp"
+
+## Install [Edge TTS] - Text to speech
+
+WORKDIR /root
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install edge-tts"
+
+## Install [Audio separator] - Separate audio file into Instruments and Vocals
+
+WORKDIR /root
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install audio-separator"
+
+## Install [Pyannote] - Speaker diarization, identify who speak when
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install pyannote.audio"
+
+## Install [Rvc Cli] - For voice cloning
 
 # WORKDIR /root
 
@@ -154,33 +165,20 @@ ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 # RUN ./install.sh
 
-RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard wget bs4 pydub transformers faiss-cpu noisereduce torchcrepe pyannote.audio"
-
 # RUN python rvc_cli.py -h
 
 # RUN wget https://huggingface.co/ORVC/Ov2Super/resolve/main/f0Ov2Super40kD.pth?download=true -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0Ov2Super40kD.pth
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O /root/rvc-cli/rvc/models/predictors/rmvpe.pt
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0G48k.pth
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0D48k.pth
 
-# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O rvc/models/predictors/rmvpe.pt
-# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O rvc/models/pretraineds/pretrained_v2/f0G48k.pth
-# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O rvc/models/pretraineds/pretrained_v2/f0D48k.pth
+## DONE
 
-# [TEMP DEV] Speaker diarization pyannote
+WORKDIR /root
 
 RUN mkdir -p /root/shared
 
 RUN mkdir -p /root/vdub
-
-ENV PYTORCH_ENABLE_MPS_FALLBACK=1
-
-ENV PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
-
-ENV CUDA_HOME="/usr/local/cuda-12.6/bin"
-
-ENV PATH="$PATH:/usr/local/cuda-12.6/bin"
-
-ENV LD_LIBRARY_PATH="/usr/local/cuda-12.6/lib64"
-
-ENV CUDA_VISIBLE_DEVICES="0"
 
 WORKDIR /root/vdub
 

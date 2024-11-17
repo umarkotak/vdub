@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"os"
-	"strings"
 
 	"github.com/asticode/go-astisub"
 	"github.com/bregydoc/gtranslate"
@@ -11,17 +10,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func TranslateTranscript(ctx context.Context, transcriptVttPath, targetResultPath string) error {
+func TranslateTranscript(ctx context.Context, taskDir, transcriptVttPath, targetResultPath string) error {
+	logrusProc := logrus.WithContext(ctx).WithField("task_dir", taskDir)
+
 	vttContentByte, err := os.ReadFile(transcriptVttPath)
 	if err != nil {
-		logrus.WithContext(ctx).Error(err)
+		logrusProc.WithContext(ctx).Error(err)
 		return err
 	}
 	vttContent := string(vttContentByte)
 
 	subObj, err := astisub.OpenFile(transcriptVttPath)
 	if err != nil {
-		logrus.WithContext(ctx).Error(err)
+		logrusProc.WithContext(ctx).Error(err)
 		return err
 	}
 
@@ -34,17 +35,18 @@ func TranslateTranscript(ctx context.Context, transcriptVttPath, targetResultPat
 			},
 		)
 		if err != nil {
-			logrus.WithContext(ctx).Error(err)
-			return err
+			logrusProc.WithContext(ctx).Error(err)
+			subItem.Lines[0].Items[0].Text = "error translate"
+		} else {
+			subItem.Lines[0].Items[0].Text = translated
 		}
 
-		vttContent = strings.ReplaceAll(vttContent, subItem.String(), translated)
 		bar.Add(1)
 	}
 
 	err = os.WriteFile(targetResultPath, []byte(vttContent), 0644)
 	if err != nil {
-		logrus.WithContext(ctx).Error(err)
+		logrusProc.WithContext(ctx).Error(err)
 		return err
 	}
 

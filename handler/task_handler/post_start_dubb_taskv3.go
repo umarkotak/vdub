@@ -159,6 +159,7 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 			err = service.DiarizeVoice(bgCtx, params.TaskDir)
 			if err != nil {
 				logrusProc.Error(err)
+				return
 			}
 
 			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_AUDIO_DIARIZED)
@@ -186,7 +187,7 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_AUDIO_TRANSCRIPTED {
 			logrusProc.Infof("DUBBING TASK RUNNING: %s; (8/11) %s", params.TaskName, "translating transcript")
-			err = service.TranslateTranscript(bgCtx, params.TranscriptVttPath, params.TranscriptTranslatedPath)
+			err = service.TranslateTranscript(bgCtx, params.TaskDir, params.TranscriptVttPath, params.TranscriptTranslatedPath)
 			if err != nil {
 				logrusProc.Error(err)
 				return
@@ -201,7 +202,7 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_TRANSCRIPT_TRANSLATED {
 			logrusProc.Infof("DUBBING TASK RUNNING: %s; (9/11) %s", params.TaskName, "generating translated audio")
-			err = service.GenerateVoice(bgCtx, params.TranscriptTranslatedPath, params.GeneratedSpeechDir, service.VoiceOpts{
+			err = service.GenerateVoice(bgCtx, params.TaskDir, params.TranscriptTranslatedPath, params.GeneratedSpeechDir, service.VoiceOpts{
 				Name:  state.VoiceName,
 				Rate:  state.VoiceRate,
 				Pitch: state.VoicePitch,
