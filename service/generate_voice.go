@@ -25,19 +25,21 @@ type (
 	}
 )
 
-func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDir string, voiceOpts VoiceOpts) error {
+func GenerateVoice(ctx context.Context, taskDir, transcriptTranslatedPath, targetSpeechDir string, voiceOpts VoiceOpts) error {
+	logrusProc := logrus.WithContext(ctx).WithField("task_dir", taskDir)
+
 	voiceOpts.SetDefault()
 
 	cmd := exec.Command("mkdir", "-p", targetSpeechDir)
 	_, err := cmd.Output()
 	if err != nil {
-		logrus.WithContext(ctx).Error(err)
+		logrusProc.WithContext(ctx).Error(err)
 		return err
 	}
 
 	subObj, err := astisub.OpenFile(transcriptTranslatedPath)
 	if err != nil {
-		logrus.WithContext(ctx).Error(err)
+		logrusProc.WithContext(ctx).Error(err)
 		return err
 	}
 
@@ -56,12 +58,31 @@ func GenerateVoice(ctx context.Context, transcriptTranslatedPath, targetSpeechDi
 		cmd.Stderr = &stderr
 		_, err = cmd.Output()
 		if err != nil {
-			logrus.WithContext(ctx).WithFields(logrus.Fields{
+			logrusProc.WithContext(ctx).WithFields(logrus.Fields{
 				"gen_speech_path": genSpeechPath,
 				"cmd":             cmd.String(),
 				"std_err":         stderr.String(),
 			}).Error(err)
-			return err
+
+			// fallback when generating voice
+			cmd = exec.Command(
+				"/root/.pyenv/shims/edge-tts",
+				"--text", fmt.Sprintf("\"%s\"", "error tts"),
+				"--write-media", genSpeechPath,
+				"-v", voiceOpts.Name,
+				fmt.Sprintf("--rate=%s", voiceOpts.Rate),
+				fmt.Sprintf("--pitch=%s", voiceOpts.Pitch),
+			)
+			_, err = cmd.Output()
+			if err != nil {
+				logrusProc.WithContext(ctx).WithFields(logrus.Fields{
+					"gen_speech_path": genSpeechPath,
+					"cmd":             cmd.String(),
+					"std_err":         stderr.String(),
+					"fallback_err":    true,
+				}).Error(err)
+				return err
+			}
 		}
 		bar.Add(1)
 	}

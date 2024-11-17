@@ -194,7 +194,7 @@ func PostStartDubbTaskV2(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_AUDIO_TRANSCRIPTED {
 			logrus.Infof("DUBBING TASK RUNNING: %s; (7/10) %s", params.TaskName, "translating transcript")
-			err = service.TranslateTranscript(bgCtx, params.TranscriptVttPath, params.TranscriptTranslatedPath)
+			err = service.TranslateTranscript(bgCtx, params.TaskDir, params.TranscriptVttPath, params.TranscriptTranslatedPath)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
 				return
@@ -209,7 +209,7 @@ func PostStartDubbTaskV2(w http.ResponseWriter, r *http.Request) {
 
 		if state.Status == model.STATE_TRANSCRIPT_TRANSLATED {
 			logrus.Infof("DUBBING TASK RUNNING: %s; (8/10) %s", params.TaskName, "generating translated audio")
-			err = service.GenerateVoice(bgCtx, params.TranscriptTranslatedPath, params.GeneratedSpeechDir, service.VoiceOpts{
+			err = service.GenerateVoice(bgCtx, params.TaskDir, params.TranscriptTranslatedPath, params.GeneratedSpeechDir, service.VoiceOpts{
 				Name:  state.VoiceName,
 				Rate:  state.VoiceRate,
 				Pitch: state.VoicePitch,
