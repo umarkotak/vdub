@@ -1,67 +1,36 @@
 # VDUB Project
 This app receive youtube video url as an input then it will generate a new video using Bahasa Indonesia as an output
 
-## API
+## How To Install
 
 ```
-POST /vdub/api/dubb/start
-body:
-{
-  "task_name": "task-1" // task must unique
-  "youtube_url": "",    // this is youtube video url
-}
+For amd (windows, linux, wsl, etc)
+make build_amd
+
+For arm (mac m1, etc)
+make build_arm
+
+To run the backend
+make docker_run_win_gpu
 ```
 
-```
-GET /vdub/api/dubb/:task_name/status
-response:
-{
-  "status": "initialized",
-  "progress": [
-    {
-      "status": "initialized",   //
-      "progress": "done"         // incompleted, processing, completed
-    }
-  ]
-}
-```
+## How To Run
+1. After the backend server is running, you can open https://vdubb.vercel.app for the web gui
+2. This web will by default pointing to localhost:29000 so make sure that port is available
+3. Enjoy the app
 
-## Tasking Structure
-for every task will be stored on their respective folder
+## Notes
+1. As of now the project only receive youtube url to be translated
+2. You need to copy and rename `cookies.txt.sample` to `cookies.txt`
 
-```
-_ /base/dir
-|__ /task-1
-  |__
-|__ /task-2
-|__ /task-n
-```
-
-
-## Docker Commands
-
-```
-# 1 To build the image
-
-docker build -t vdub-core -f Dockerfile . --build-arg ARCH=arm64 // for arm chip (eg: apple m1)
-
-docker build -t vdub-core -f Dockerfile . --build-arg ARCH=amd64 // for amd chip (eg: intel)
-
-# 2 To run the docker
-
--- On macbook
-docker run -dit -p 29000:29000 -v /Users/umarramadhana/umar/personal_projects/vdub/shared:/root/shared -v /Users/umarramadhana/umar/personal_projects/vdub:/root/vdub --name vdub-core vdub-core
-
-docker run -dit -p 29000:29000 -v ./shared:/root/shared -v .:/root/vdub --name vdub-core vdub-core
-
--- On windows
-docker run -dit -p 29000:29000 -v /home/umarkotak/umar/personal_projects/vdub/shared:/root/shared -v /home/umarkotak/umar/personal_projects/vdub/go-be:/root/go-be --name vdub-core vdub-core
-
-# 3 To ssh into the container
-
-docker exec -it vdub-core bash
-
-# 4
-```
-
-python -m bark --text "Hello, my name is Suno." --output_filename "example.wav"
+## Tech used
+All tech used is open sourced, you can adjust specific part you need - for the complete list, see Dockerfile
+1. [Whisper] - Speech to text for transcripting
+2. [Golang] - GO programming language
+3. [pyenv] - Python env management
+4. [Python dependencies]
+5. [Yt DLP] - Youtube video downloader
+6. [Edge TTS] - Text to speech
+7. [Audio separator] - Separate audio file into Instruments and Vocals
+8. [Pyannote] - Speaker diarization, identify who speak when
+9. [Rvc Cli] - For voice cloning
