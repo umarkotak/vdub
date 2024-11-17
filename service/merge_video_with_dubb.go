@@ -34,14 +34,14 @@ func MergeVideoWithDubb(
 	}
 
 	filterComplexes := []string{
-		"[0]volume=40dB[video0]",
+		"[0]volume=25dB[video0]",
 	}
 	filterComplexCloser := ""
 	for idx, subItem := range subObj.Items {
 		audioIdx := fmt.Sprintf("[audio%v]", idx)
 
 		filter := fmt.Sprintf(
-			"[%v]volume=40dB,adelay=%v%s",
+			"[%v]volume=25dB,adelay=%v%s",
 			idx+1,
 			subItem.StartAt.Milliseconds(),
 			audioIdx,

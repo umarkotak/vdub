@@ -44,28 +44,6 @@ WORKDIR /root
 
 SHELL ["/bin/bash", "-c"]
 
-## Install [pyenv] - Python env management
-
-RUN curl https://pyenv.run | bash
-
-ENV PYENV_ROOT="/root/.pyenv"
-
-ENV PATH="$PYENV_ROOT/bin:$PATH"
-
-RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
-
-RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
-
-RUN pyenv install 3.12.7
-
-RUN pyenv global 3.12.7
-
-RUN ln -s /root/.pyenv/shims/python /usr/bin/python
-
-RUN mv /usr/bin/python3 /usr/bin/python3.original
-
-RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
-
 ## Install [Whisper] - Speech to text for transcripting
 
 WORKDIR /root
@@ -88,21 +66,21 @@ WORKDIR /root
 
 RUN mkdir -p go/bin
 
-RUN curl -OL https://go.dev/dl/go1.22.2.linux-arm64.tar.gz
+RUN curl -OL https://go.dev/dl/go1.23.3.linux-arm64.tar.gz
 
-RUN curl -OL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
+RUN curl -OL https://go.dev/dl/go1.23.3.linux-amd64.tar.gz
 
 ARG ARCH
 
 RUN if [ "$ARCH" == "arm64" ]; then \
-    tar -C /usr/local -xvf go1.22.2.linux-arm64.tar.gz; \
+    tar -C /usr/local -xvf go1.23.3.linux-arm64.tar.gz; \
   else \
-    tar -C /usr/local -xvf go1.22.2.linux-amd64.tar.gz; \
+    tar -C /usr/local -xvf go1.23.3.linux-amd64.tar.gz; \
   fi
 
-RUN rm -rf go1.22.2.linux-arm64.tar.gz
+RUN rm -rf go1.23.3.linux-arm64.tar.gz
 
-RUN rm -rf go1.22.2.linux-amd64.tar.gz
+RUN rm -rf go1.23.3.linux-amd64.tar.gz
 
 ENV GOROOT=/usr/local/go
 
@@ -112,12 +90,35 @@ ENV GOBIN=$GOPATH/bin
 
 ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
+## Install [pyenv] - Python env management
+
+RUN curl https://pyenv.run | bash
+
+ENV PYENV_ROOT="/root/.pyenv"
+
+ENV PATH="$PYENV_ROOT/bin:$PATH"
+
+ENV PATH="$PYENV_ROOT/shims:$PATH"
+
+RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
+
+RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
+
+RUN pyenv install 3.10.15
+
+RUN pyenv global 3.10.15
+
+RUN ln -s /root/.pyenv/shims/python /usr/bin/python
+
+RUN mv /usr/bin/python3 /usr/bin/python3.original
+
+RUN ln -s /root/.pyenv/shims/python3 /usr/bin/python3
+
 ## Install [Python dependencies]
 
-
-
 RUN bash -i -c "source ~/.bashrc && python -m pip install wget"
-RUN bash -i -c "source ~/.bashrc && python -m pip install llvmlite torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu121"
+RUN bash -i -c "source ~/.bashrc && python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124"
+RUN bash -i -c "source ~/.bashrc && python -m pip install llvmlite"
 RUN bash -i -c "source ~/.bashrc && python -m pip install tensorboard"
 RUN bash -i -c "source ~/.bashrc && python -m pip install bs4"
 RUN bash -i -c "source ~/.bashrc && python -m pip install pydub"
@@ -126,10 +127,6 @@ RUN bash -i -c "source ~/.bashrc && python -m pip install noisereduce"
 RUN bash -i -c "source ~/.bashrc && python -m pip install torchcrepe"
 RUN bash -i -c "source ~/.bashrc && python -m pip install pedalboard"
 RUN bash -i -c "source ~/.bashrc && python -m pip install onnxruntime"
-
-RUN bash -i -c "source ~/.bashrc && python -m ensurepip --upgrade"
-RUN bash -i -c "source ~/.bashrc && python -m pip install --upgrade pip"
-RUN bash -i -c "source ~/.bashrc && python -m pip install --upgrade setuptools"
 RUN bash -i -c "source ~/.bashrc && python -m pip install audio_upscaler"
 # RUN bash -i -c "source ~/.bashrc && python -m pip install faiss"
 RUN bash -i -c "source ~/.bashrc && python -m pip install faiss-cpu faiss-gpu-cu12"
@@ -158,22 +155,22 @@ RUN bash -i -c "source ~/.bashrc && python -m pip install pyannote.audio"
 
 ## Install [Rvc Cli] - For voice cloning
 
-WORKDIR /root
+# WORKDIR /root
 
-RUN git clone https://github.com/blaisewf/rvc-cli.git
+# RUN git clone https://github.com/blaisewf/rvc-cli.git
 
-WORKDIR /root/rvc-cli
+# WORKDIR /root/rvc-cli
 
-RUN chmod +x install.sh
+# RUN chmod +x install.sh
 
-RUN ./install.sh
+# RUN ./install.sh
 
-RUN python rvc_cli.py -h
+# RUN python rvc_cli.py -h
 
-RUN wget https://huggingface.co/ORVC/Ov2Super/resolve/main/f0Ov2Super40kD.pth?download=true -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0Ov2Super40kD.pth
-RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O /root/rvc-cli/rvc/models/predictors/rmvpe.pt
-RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0G48k.pth
-RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0D48k.pth
+# RUN wget https://huggingface.co/ORVC/Ov2Super/resolve/main/f0Ov2Super40kD.pth?download=true -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0Ov2Super40kD.pth
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt?download=true -O /root/rvc-cli/rvc/models/predictors/rmvpe.pt
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0G48k.pth
+# RUN wget https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -O /root/rvc-cli/rvc/models/pretraineds/pretrained_v2/f0D48k.pth
 
 ## DONE
 

@@ -159,6 +159,7 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 			err = service.DiarizeVoice(bgCtx, params.TaskDir)
 			if err != nil {
 				logrusProc.Error(err)
+				return
 			}
 
 			err = service.SaveStateStatus(bgCtx, params.TaskDir, &state, model.STATE_AUDIO_DIARIZED)

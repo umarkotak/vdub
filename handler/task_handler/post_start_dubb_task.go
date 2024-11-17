@@ -51,10 +51,9 @@ func (p *StartDubbTaskParams) Gen(username string) {
 	p.RawVideoPath = utils.GenRawVideoPath(p.TaskDir, p.RawVideoName)
 	p.RawVideoAudioName = "raw_video_audio.wav"
 	p.RawVideoAudioPath = utils.GenRawVideoAudioPath(p.TaskDir, p.RawVideoAudioName)
-	p.AudioInstrumentPath = utils.GenAudioInstrumentPath(p.RawVideoAudioPath)
-	p.AudioVocalPath = utils.GenAudioVocalPath(p.RawVideoAudioPath)
-	p.Vocal16KHzName = "raw_video_audio_Vocals_16KHz.wav"
-	p.Vocal16KHzPath = utils.GenVocal16KHzPath(p.TaskDir, p.Vocal16KHzName)
+	p.AudioInstrumentPath = utils.GenAudioInstrumentPath(p.TaskDir)
+	p.AudioVocalPath = utils.GenAudioVocalPath(p.TaskDir)
+	p.Vocal16KHzPath = utils.GenVocal16KHzPath(p.TaskDir)
 	p.InstrumentVideoPath = utils.GenInstrumentVideoPath(p.TaskDir)
 	p.TranscriptPath = utils.GenTranscriptPath(p.TaskDir)
 	p.TranscriptVttPath = utils.GenTranscriptVttPath(p.TaskDir)

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/umarkotak/vdub-go/config"
 )
@@ -30,18 +29,16 @@ func GenRawVideoAudioPath(taskDir, rawVideoAudioName string) string {
 	return fmt.Sprintf("%s/%s", taskDir, rawVideoAudioName)
 }
 
-func GenAudioInstrumentPath(rawVideoAudioPath string) string {
-	// return fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
-	return fmt.Sprintf("%s_Instruments.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
+func GenAudioInstrumentPath(taskDir string) string {
+	return fmt.Sprintf("%s/raw_video_audio_(Instrumental)_UVR-MDX-NET-Voc_FT.wav", taskDir)
 }
 
-func GenAudioVocalPath(rawVideoAudioPath string) string {
-	// return fmt.Sprintf("%s_Vocals.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
-	return fmt.Sprintf("%s_Vocals.wav", strings.TrimSuffix(rawVideoAudioPath, ".wav"))
+func GenAudioVocalPath(taskDir string) string {
+	return fmt.Sprintf("%s/raw_video_audio_(Vocals)_UVR-MDX-NET-Voc_FT.wav", taskDir)
 }
 
-func GenVocal16KHzPath(taskDir, vocal16KHzName string) string {
-	return fmt.Sprintf("%s/%s", taskDir, vocal16KHzName)
+func GenVocal16KHzPath(taskDir string) string {
+	return fmt.Sprintf("%s/raw_video_audio_(Vocals)_UVR-MDX-NET-Voc_FT_16KHz.wav", taskDir)
 }
 
 func GenInstrumentVideoPath(taskDir string) string {
