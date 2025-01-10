@@ -11,6 +11,7 @@ type (
 		BaseDir                     string // base dir will contain all tasks folder
 		VocalRemoverPy              string //
 		VocalRemoverModelPath       string //
+		WhisperMode                 string //
 		WhisperBinary               string //
 		WhisperModelPath            string //
 		GoogleAiStudioKey           string //
@@ -30,6 +31,7 @@ func InitConfig() {
 		BaseDir:                     GetStringWithDefault("BASE_DIR", "/root/shared"),
 		VocalRemoverPy:              GetStringWithDefault("VOCAL_REMOVER_PY", "/root/vocal-remover/inference.py"),
 		VocalRemoverModelPath:       GetStringWithDefault("VOCAL_REMOVER_MODEL_PATH", "/root/vocal-remover/baseline.pth"),
+		WhisperMode:                 GetStringWithDefault("WHISPER_MODE", ""),
 		WhisperBinary:               GetStringWithDefault("WHISPER_BINARY", "/root/whisper.cpp/build/bin/whisper-cli"),
 		WhisperModelPath:            GetStringWithDefault("WHISPER_MODEL_PATH", "/root/whisper.cpp/models/ggml-large-v3-turbo-q5_0.bin"),
 		PythonDiarizationPath:       GetStringWithDefault("PYTHON_DIARIZATION_PATH", "/root/vdub/bin/speaker_diarization/main.py"),

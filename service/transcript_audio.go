@@ -22,17 +22,29 @@ const (
 )
 
 func TranscriptAudio(ctx context.Context, audioPath, transcriptPath string) error {
-	cmdTranscript := exec.Command(
-		config.Get().WhisperBinary,
-		"-m", config.Get().WhisperModelPath,
-		"-ovtt",
-		"--beam-size", BEAM_SIZE,
-		"--entropy-thold", ENTHROPY_THOLD,
-		"--max-context", MAX_CONTEXT,
-		"-of", transcriptPath,
-		"--translate",
-		audioPath,
-	)
+	var cmdTranscript *exec.Cmd
+	if config.Get().WhisperMode == "pip" {
+		cmdTranscript = exec.Command(
+			"whisper",
+			audioPath,
+			"--model", "turbo",
+			"--output_format", "vtt",
+			"--output_dir", transcriptPath,
+			"--task", "translate",
+		)
+	} else {
+		cmdTranscript = exec.Command(
+			config.Get().WhisperBinary,
+			"-m", config.Get().WhisperModelPath,
+			"-ovtt",
+			"--beam-size", BEAM_SIZE,
+			"--entropy-thold", ENTHROPY_THOLD,
+			"--max-context", MAX_CONTEXT,
+			"-of", transcriptPath,
+			"--translate",
+			audioPath,
+		)
+	}
 
 	stdout, _ := cmdTranscript.StdoutPipe()
 	stderr, _ := cmdTranscript.StderrPipe()
@@ -96,13 +108,27 @@ func TranscriptAudioWithDiarization(ctx context.Context, taskDir, audioPath, tra
 
 	segmentWhisperBar := progressbar.Default(int64(len(diarizationVtt.Items)), "Translating")
 	for idx, subItem := range diarizationVtt.Items {
-		segmentedVoicePath := fmt.Sprintf("%s/segmented_speech/%v.wav", taskDir, idx)
-		cmd = exec.Command(
-			config.Get().WhisperBinary,
-			"--no-prints", "--output-txt",
-			"--model", config.Get().WhisperModelPath,
-			"--translate", segmentedVoicePath,
-		)
+		segmentedVoiceDir := fmt.Sprintf("%s/segmented_speech", taskDir)
+		segmentedVoicePath := fmt.Sprintf("%s/%v.wav", segmentedVoiceDir, idx)
+		if config.Get().WhisperMode == "pip" {
+			cmd = exec.Command(
+				"whisper", segmentedVoicePath,
+				"--model", "turbo",
+				"--output_dir", segmentedVoiceDir,
+				"--output_format", "txt",
+				"--task", "translate",
+			)
+		} else {
+			cmd = exec.Command(
+				config.Get().WhisperBinary,
+				"--no-prints", "--output-txt",
+				"--model", config.Get().WhisperModelPath,
+				"--translate", segmentedVoicePath,
+			)
+		}
+		logrus.WithContext(ctx).WithFields(logrus.Fields{
+			"cmd": cmd.String(),
+		}).Infof("executing whisper")
 		_, err = cmd.Output()
 		if err != nil {
 			logrus.WithContext(ctx).WithFields(logrus.Fields{
@@ -112,6 +138,9 @@ func TranscriptAudioWithDiarization(ctx context.Context, taskDir, audioPath, tra
 		}
 
 		textContent, _ := readFileAsOneLine(fmt.Sprintf("%s.txt", segmentedVoicePath))
+		if textContent == "" {
+			textContent, _ = readFileAsOneLine(fmt.Sprintf("%s/%v.txt", segmentedVoiceDir, idx))
+		}
 		if textContent == "" {
 			textContent = "missing text"
 		}

@@ -4,6 +4,9 @@ build_base:
 build_arm:
 	docker build -t vdub-core-arm -f DockerfileArm .
 
+build_arm2:
+	docker build -t vdub-core-arm -f DockerfileArm2 .
+
 build:
 	docker build -t vdub-core -f Dockerfile .
 
