@@ -103,6 +103,7 @@ func (vu *VideoUploader) UploadToYouTube(videoPath string, metadata VideoMetadat
 		},
 		Status: &youtube.VideoStatus{
 			PrivacyStatus: metadata.Privacy,
+			MadeForKids:   false,
 		},
 	}
 
