@@ -17,6 +17,11 @@ type (
 		GoogleAiStudioKey           string //
 		HuggingFaceDiarizationToken string //
 		PythonDiarizationPath       string //
+		YoutubeClientID             string //
+		YoutubeClientSecret         string //
+		YoutubeClientSecretJson     string //
+		YoutubeAccountOauthJson     string //
+		TiktokAccessToken           string //
 	}
 )
 
@@ -37,6 +42,11 @@ func InitConfig() {
 		PythonDiarizationPath:       GetStringWithDefault("PYTHON_DIARIZATION_PATH", "/root/vdub/bin/speaker_diarization/main.py"),
 		GoogleAiStudioKey:           os.Getenv("GOOGLE_AI_STUDIO_KEY"),
 		HuggingFaceDiarizationToken: os.Getenv("HUGGING_FACE_DIARIZATION_TOKEN"),
+		YoutubeClientID:             os.Getenv("YOUTUBE_CLIENT_ID"),
+		YoutubeClientSecret:         os.Getenv("YOUTUBE_CLIENT_SECRET"),
+		YoutubeClientSecretJson:     os.Getenv("YOUTUBE_CLIENT_SECRET_JSON"),
+		YoutubeAccountOauthJson:     os.Getenv("YOUTUBE_ACCOUNT_OAUTH_JSON"),
+		TiktokAccessToken:           os.Getenv("TIKTOK_ACCESS_TOKEN"),
 	}
 }
 

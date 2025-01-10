@@ -50,6 +50,7 @@ func main() {
 	r.Patch("/vdub/api/dubb/task/{task_name}/setting", task_handler.PatchUpdateTaskSetting)
 	r.Patch("/vdub/api/dubb/task/{task_name}/status", task_handler.UpdateTaskStatus)
 	r.Delete("/vdub/api/dubb/task/{task_name}", task_handler.DeleteTask)
+	r.Post("/vdub/api/dubb/task/{task_name}/upload/youtube", task_handler.UploadToYoutube)
 
 	// Transcript related API
 	r.Get("/vdub/api/dubb/task/{task_name}/transcript/{transcript_type}", task_handler.GetTranscript)
