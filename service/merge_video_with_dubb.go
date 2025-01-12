@@ -17,6 +17,7 @@ func MergeVideoWithDubb(
 	adjustedSpeechDir,
 	instrumentVideoPath,
 	dubbedVideoPath string,
+	volume string,
 ) error {
 	subObj, err := astisub.OpenFile(transcriptTranslatedPath)
 	if err != nil {
@@ -63,6 +64,26 @@ func MergeVideoWithDubb(
 
 	cmd := exec.Command("ffmpeg", ffmpegArgs...)
 	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	_, err = cmd.Output()
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"cmd":     cmd.String(),
+			"std_err": stderr.String(),
+		}).Error(err)
+		return err
+	}
+
+	// used to increase video volume
+	// ffmpeg -i input.mp4 -filter:a "volume=2.0" -c:v copy output.mp4
+	if volume == "" {
+		volume = "1.2"
+	}
+	cmd = exec.Command("ffmpeg",
+		"-i", dubbedVideoPath,
+		"-filter:a", fmt.Sprintf("\"volume=%s\"", volume),
+		"-c:v", "copy", dubbedVideoPath,
+	)
 	cmd.Stderr = &stderr
 	_, err = cmd.Output()
 	if err != nil {

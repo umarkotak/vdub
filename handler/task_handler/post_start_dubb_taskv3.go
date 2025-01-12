@@ -242,6 +242,7 @@ func PostStartTask(w http.ResponseWriter, r *http.Request) {
 				params.SpeechAdjustedDir,
 				params.InstrumentVideoPath,
 				params.DubbedVideoPath,
+				params.Volume,
 			)
 			if err != nil {
 				logrusProc.Error(err)

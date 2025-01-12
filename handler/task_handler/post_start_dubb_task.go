@@ -21,6 +21,7 @@ type (
 		VoiceRate      string `json:"voice_rate" validate:"required"`  // eg: [-/+]10%
 		VoicePitch     string `json:"voice_pitch" validate:"required"` // eg: [-/+]10Hz
 		ForceStartFrom string `json:"force_start_from"`                // used to run from certain state
+		Volume         string `json:"volume"`                          // eg: 2.0 - used to change volume on dubbing
 
 		TaskDir                  string
 		RawVideoName             string
@@ -292,6 +293,7 @@ func PostStartDubbTask(w http.ResponseWriter, r *http.Request) {
 				params.SpeechAdjustedDir,
 				params.InstrumentVideoPath,
 				params.DubbedVideoPath,
+				params.Volume,
 			)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)

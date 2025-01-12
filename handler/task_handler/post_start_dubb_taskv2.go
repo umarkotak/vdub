@@ -249,6 +249,7 @@ func PostStartDubbTaskV2(w http.ResponseWriter, r *http.Request) {
 				params.SpeechAdjustedDir,
 				params.InstrumentVideoPath,
 				params.DubbedVideoPath,
+				params.Volume,
 			)
 			if err != nil {
 				logrus.WithContext(bgCtx).Error(err)
