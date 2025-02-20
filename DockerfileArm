@@ -83,6 +83,10 @@ RUN bash -i -c "source ~/.bashrc && python -m pip install audio-separator[cpu]"
 
 RUN bash -i -c "source ~/.bashrc && python -m pip install pyannote.audio"
 
+## Install [Instaloader] - Instagram tools
+
+RUN bash -i -c "source ~/.bashrc && python -m pip install instaloader"
+
 ## DONE
 
 WORKDIR /root
